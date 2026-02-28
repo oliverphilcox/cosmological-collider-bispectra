@@ -28,9 +28,9 @@
   }
   .plot-box {
     flex: 1 1 540px;
-    max-width: 640px;
+    max-width: 660px;
     min-width: 400px;
-    height: 420px;
+    height: 460px;
     background: #fff;
     border-radius: 8px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
@@ -166,7 +166,6 @@ const SLIDER_DEFS = [
    'π̇²σ Interaction', 'mix'],
 ];
 
-
 // ═══════════════════════════════════════════════════
 // Globals (populated after data load)
 // ═══════════════════════════════════════════════════
@@ -277,6 +276,60 @@ async function loadData() {
 }
 
 // ═══════════════════════════════════════════════════
+// Build 2D heatmap grid structure
+// (called once after data load)
+// ═══════════════════════════════════════════════════
+function buildGrid() {
+  const {xs, ys, N_bins} = DATA;
+
+  // Round to 8 decimal places to avoid floating-point duplicates
+  const round8 = v => Math.round(v * 1e8) / 1e8;
+
+  // Get unique sorted x and y bin centers
+  const uxSet = new Set();
+  const uySet = new Set();
+  for (let i = 0; i < N_bins; i++) {
+    uxSet.add(round8(xs[i]));
+    uySet.add(round8(ys[i]));
+  }
+  const ux = [...uxSet].sort((a,b) => a - b);
+  const uy = [...uySet].sort((a,b) => a - b);
+  const nx = ux.length, ny = uy.length;
+
+  // Index lookup maps
+  const xIdx = new Map();
+  ux.forEach((v, i) => xIdx.set(v, i));
+  const yIdx = new Map();
+  uy.forEach((v, i) => yIdx.set(v, i));
+
+  // Map each bin to its (ix, iy) grid position
+  const binIx = new Int32Array(N_bins);
+  const binIy = new Int32Array(N_bins);
+  for (let i = 0; i < N_bins; i++) {
+    binIx[i] = xIdx.get(round8(xs[i]));
+    binIy[i] = yIdx.get(round8(ys[i]));
+  }
+
+  // Build edge arrays: each cell spans [center/sqR, center*sqR]
+  const xEdges = new Array(nx + 1);
+  for (let i = 0; i < nx; i++) xEdges[i] = ux[i] / sqR;
+  xEdges[nx] = ux[nx-1] * sqR;
+
+  const yEdges = new Array(ny + 1);
+  for (let i = 0; i < ny; i++) yEdges[i] = uy[i] / sqR;
+  yEdges[ny] = uy[ny-1] * sqR;
+
+  DATA.ux = ux;
+  DATA.uy = uy;
+  DATA.nx = nx;
+  DATA.ny = ny;
+  DATA.binIx = binIx;
+  DATA.binIy = binIy;
+  DATA.xEdges = xEdges;
+  DATA.yEdges = yEdges;
+}
+
+// ═══════════════════════════════════════════════════
 // Bilinear interpolation on (mu, log10c) grid
 // Returns array of N_bins values
 // ═══════════════════════════════════════════════════
@@ -298,15 +351,12 @@ function interpExchange(scaled_arr, mu, log10c) {
   }
   if (ic >= N_log10c - 1) ic = N_log10c - 2;
 
-  // Fractional positions
-  const tmu = (mu - mu_grid[imu]) / (mu_grid[imu+1] - mu_grid[imu]);
-  const tc = (log10c - log10c_grid[ic]) / (log10c_grid[ic+1] - log10c_grid[ic]);
+  // Fractional positions (clamped to [0,1])
+  const tm = Math.max(0, Math.min(1,
+    (mu - mu_grid[imu]) / (mu_grid[imu+1] - mu_grid[imu])));
+  const tc = Math.max(0, Math.min(1,
+    (log10c - log10c_grid[ic]) / (log10c_grid[ic+1] - log10c_grid[ic])));
 
-  // Clamp
-  const tm = Math.max(0, Math.min(1, tmu));
-  const tcl = Math.max(0, Math.min(1, tc));
-
-  // Bilinear: f(mu,c) = (1-tm)*(1-tc)*f00 + tm*(1-tc)*f10 + (1-tm)*tc*f01 + tm*tc*f11
   const result = new Float64Array(N_bins);
   const stride_c = N_bins;
   const stride_mu = N_log10c * N_bins;
@@ -315,10 +365,10 @@ function interpExchange(scaled_arr, mu, log10c) {
   const base01 = imu * stride_mu + (ic+1) * stride_c;
   const base11 = (imu+1) * stride_mu + (ic+1) * stride_c;
 
-  const w00 = (1-tm) * (1-tcl);
-  const w10 = tm * (1-tcl);
-  const w01 = (1-tm) * tcl;
-  const w11 = tm * tcl;
+  const w00 = (1-tm) * (1-tc);
+  const w10 = tm * (1-tc);
+  const w01 = (1-tm) * tc;
+  const w11 = tm * tc;
 
   for (let b = 0; b < N_bins; b++) {
     result[b] = w00*scaled_arr[base00+b] + w10*scaled_arr[base10+b]
@@ -382,9 +432,9 @@ let plotsInitialized = false;
 function updatePlots() {
   const p = getParams();
   const {s_self, s_exch, s_tot} = computeShape(p);
-  const {x_1d, mask_1d, xs, ys, N_bins, N_1d} = DATA;
+  const {x_1d, mask_1d, N_bins, N_1d, nx, ny, binIx, binIy, xEdges, yEdges} = DATA;
 
-  // Extract 1D slice
+  // ── 1D slice ──
   const self1d = new Float64Array(N_1d);
   const exch1d = new Float64Array(N_1d);
   const tot1d = new Float64Array(N_1d);
@@ -403,32 +453,28 @@ function updatePlots() {
   const title1 = `μ=${p.mu.toFixed(2)}, c<sub>π</sub>=${cpi}, c<sub>σ</sub>=${csig}`;
   const title2 = `ρ=${p.rho.toFixed(1)}, ρ̃=${p.rhot.toFixed(1)}, c̃₃=${p.c3.toFixed(0)}`;
 
-  // --- 1D Plot ---
+  // ── 1D Plot traces ──
   const traces1d = [];
   const comps = [
     {arr: self1d, name: 'Self-interaction', color: '#1f77b4'},
-    {arr: exch1d, name: 'Weak mixing', color: '#ff7f0e'},
-    {arr: tot1d,  name: 'Total', color: '#000000'},
+    {arr: exch1d, name: 'Weak mixing',      color: '#ff7f0e'},
+    {arr: tot1d,  name: 'Total',             color: '#000000'},
   ];
 
   if (useLogY) {
-    // Log mode: positive solid, |negative| dotted
     for (const {arr, name, color} of comps) {
-      const pos_y = [], neg_y = [], xv = [];
-      const pos_yn = [], neg_yn = [], xvn = [];
+      const xv = [], pos_y = [], neg_y = [];
       for (let i = 0; i < N_1d; i++) {
         xv.push(x_1d[i]);
         pos_y.push(arr[i] > FLOOR ? arr[i] : null);
-        xvn.push(x_1d[i]);
-        neg_yn.push(-arr[i] > FLOOR ? -arr[i] : null);
+        neg_y.push(-arr[i] > FLOOR ? -arr[i] : null);
       }
       traces1d.push({x: xv, y: pos_y, name, mode: 'lines',
-        line: {color, width: 2, dash: 'solid'}, showlegend: true});
-      traces1d.push({x: xvn, y: neg_yn, name: name+' (neg)', mode: 'lines',
+        line: {color, width: 2.5}, showlegend: true});
+      traces1d.push({x: xv, y: neg_y, name: name+' (neg)', mode: 'lines',
         line: {color, width: 2, dash: 'dot'}, showlegend: false});
     }
   } else {
-    // Linear mode: just plot the values
     for (const {arr, name, color} of comps) {
       const xv = [], yv = [];
       for (let i = 0; i < N_1d; i++) {
@@ -436,90 +482,92 @@ function updatePlots() {
         yv.push(arr[i]);
       }
       traces1d.push({x: xv, y: yv, name, mode: 'lines',
-        line: {color, width: 2}, showlegend: true});
+        line: {color, width: 2.5}, showlegend: true});
     }
   }
 
-  const yAxisType1d = useLogY ? 'log' : 'linear';
   const layout1d = {
     title: {text: title1, font: {size: 14}},
-    xaxis: {type: 'log', title: 'x = k₁/k₃', range: [-3, 0]},
-    yaxis: {type: yAxisType1d, title: 'S(x,1) / x', autorange: true},
-    legend: {x: 0.02, y: 0.98, font: {size: 11}},
-    margin: {l: 60, r: 20, t: 40, b: 50},
-    showlegend: true,
+    xaxis: {type: 'log', title: {text: 'x = k₁/k₃', font: {size: 13}}, range: [-3, 0]},
+    yaxis: {type: useLogY ? 'log' : 'linear',
+            title: {text: 'S(x,1) / x', font: {size: 13}}, autorange: true},
+    legend: {x: 0.98, y: 0.98, xanchor: 'right', yanchor: 'top',
+             bgcolor: 'rgba(255,255,255,0.85)', bordercolor: '#ccc', borderwidth: 1,
+             font: {size: 11}},
+    margin: {l: 65, r: 15, t: 45, b: 55},
+    shapes: useLogY ? [] : [{
+      type: 'line', x0: 1e-3, x1: 1, y0: 0, y1: 0, xref: 'x', yref: 'y',
+      line: {color: '#888', width: 1, dash: 'dash'}
+    }],
   };
 
-  // Add zero line in linear mode
-  if (!useLogY) {
-    layout1d.shapes = [{
-      type: 'line', x0: 1e-3, x1: 1, y0: 0, y1: 0, xref: 'x', yref: 'y',
-      line: {color: 'black', width: 1, dash: 'dash'}
-    }];
-  }
-
-  // --- 2D Plot (heatmap via scatter with markers) ---
-  // Build custom colored rectangles using Plotly shapes
+  // ── 2D heatmap ──
   const vm = Math.max(...Array.from(s_tot).map(Math.abs));
 
-  // Use scatter for the 2D cells (faster than shapes)
-  const x2d = [], y2d = [], z2d = [], customdata = [];
+  // Build z matrix [ny][nx], NaN for empty cells
+  const z = [];
+  for (let iy = 0; iy < ny; iy++) {
+    const row = new Array(nx).fill(null);
+    z.push(row);
+  }
   for (let i = 0; i < N_bins; i++) {
-    x2d.push(xs[i]);
-    y2d.push(ys[i]);
-    z2d.push(s_tot[i]);
+    z[binIy[i]][binIx[i]] = s_tot[i];
   }
 
-  // Geometry line points
-  const xline = [];
-  const yline = [];
-  for (let i = 0; i <= 200; i++) {
-    const xv = i / 200;
+  const traceHeatmap = {
+    type: 'heatmap',
+    x: xEdges,
+    y: yEdges,
+    z: z,
+    colorscale: 'RdBu',
+    reversescale: true,
+    zmin: -vm, zmax: vm,
+    connectgaps: false,
+    hoverongaps: false,
+    colorbar: {
+      title: {text: 'S(x,y)', font: {size: 13}},
+      len: 0.85,
+      thickness: 18,
+    },
+    hovertemplate: 'x=%{x:.3f}<br>y=%{y:.3f}<br>S=%{z:.3e}<extra></extra>',
+  };
+
+  // Geometry lines: y=1 and triangle boundary y = 0.5 + |0.5 - x|
+  const xline = [], yline = [];
+  for (let i = 0; i <= 300; i++) {
+    const xv = i / 300;
     xline.push(xv);
     yline.push(0.5 + Math.abs(0.5 - xv));
   }
-
-  const trace2d = {
-    x: x2d, y: y2d,
-    mode: 'markers',
-    type: 'scatter',
-    marker: {
-      color: z2d,
-      colorscale: 'RdBu',
-      reversescale: true,
-      cmin: -vm, cmax: vm,
-      size: 14,
-      symbol: 'square',
-      colorbar: {title: 'S(x,y)', len: 0.9},
-    },
-    showlegend: false,
-    hovertemplate: 'x=%{x:.3f}<br>y=%{y:.3f}<br>S=%{marker.color:.3e}<extra></extra>',
-  };
-
   const geomLine = {
-    x: xline, y: yline, mode: 'lines',
-    line: {color: 'black', width: 0.5, dash: 'solid'},
+    x: xline, y: yline, mode: 'lines', type: 'scatter',
+    line: {color: 'black', width: 1},
     showlegend: false, hoverinfo: 'skip',
   };
 
   const layout2d = {
     title: {text: title2, font: {size: 14}},
-    xaxis: {title: 'x = k₁/k₃', range: [0, sqR]},
-    yaxis: {title: 'y = k₂/k₃', range: [0.5/sqR, sqR]},
-    margin: {l: 60, r: 20, t: 40, b: 50},
+    xaxis: {title: {text: 'x = k₁/k₃', font: {size: 13}},
+            range: [0, sqR], constrain: 'domain'},
+    yaxis: {title: {text: 'y = k₂/k₃', font: {size: 13}},
+            range: [0.5/sqR, sqR], constrain: 'domain',
+            scaleanchor: 'x', scaleratio: 1},
+    margin: {l: 65, r: 15, t: 45, b: 55},
     shapes: [{
       type: 'line', x0: 0, x1: sqR, y0: 1, y1: 1, xref: 'x', yref: 'y',
-      line: {color: 'black', width: 0.5}
+      line: {color: 'black', width: 0.8}
     }],
   };
 
   if (!plotsInitialized) {
-    Plotly.newPlot('plot1d', traces1d, layout1d, {responsive: true, displayModeBar: false});
-    Plotly.newPlot('plot2d', [trace2d, geomLine], layout2d, {responsive: true, displayModeBar: false});
+    Plotly.newPlot('plot1d', traces1d, layout1d,
+      {responsive: true, displayModeBar: false});
+    Plotly.newPlot('plot2d', [traceHeatmap, geomLine], layout2d,
+      {responsive: true, displayModeBar: false});
     plotsInitialized = true;
   } else {
     Plotly.react('plot1d', traces1d, layout1d);
-    Plotly.react('plot2d', [trace2d, geomLine], layout2d);
+    Plotly.react('plot2d', [traceHeatmap, geomLine], layout2d);
   }
 }
 
@@ -546,6 +594,8 @@ async function init() {
     document.getElementById('loading').textContent = 'Error loading data: ' + e.message;
     return;
   }
+
+  buildGrid();
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('app').style.display = '';
