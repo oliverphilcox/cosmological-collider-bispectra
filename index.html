@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Massive Scalar Exchange — Bispectrum Shape Explorer</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script>MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]}};</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -102,6 +104,31 @@
     font-size: 1.1rem;
     color: #888;
   }
+  details.lagrangian {
+    max-width: 820px;
+    margin: 4px auto 10px;
+    padding: 0 20px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+  details.lagrangian summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #444;
+    user-select: none;
+  }
+  details.lagrangian .lag-body {
+    margin-top: 6px;
+    padding: 10px 14px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    overflow-x: auto;
+  }
+  details.lagrangian .lag-body p { margin: 4px 0; }
+  .term-self { color: #1f77b4; }
+  .term-mix  { color: #ff7f0e; }
   footer {
     text-align: center;
     font-size: 0.75rem;
@@ -113,6 +140,28 @@
 <body>
 
 <h1>Massive Scalar Exchange</h1>
+
+<details class="lagrangian">
+  <summary>Show Lagrangian</summary>
+  <div class="lag-body">
+    <p>Inflaton $\pi$ with sound speed $c_\pi$ coupled to a massive scalar $\sigma$
+       with sound speed $c_\sigma$ and mass $\mu_\sigma^2 = \mu^2 + \tfrac{9}{4}$ (in units of $H$):</p>
+    <p>$$\mathcal{L} \;\supset\;
+      \frac{F_\pi^2}{2c_\pi^2}\!\left[\dot\pi^2 - c_\pi^2(\partial_i\pi)^2\right]
+      \;+\; \frac{1}{2c_\sigma^2}\!\left[\dot\sigma^2 - c_\sigma^2(\partial_i\sigma)^2 - \mu_\sigma^2 H^2\,\sigma^2\right]$$</p>
+    <p>$$\quad +\; \color{#1f77b4}{
+        \frac{(c_\pi^{-2}-1)\,F_\pi^2}{2\,c_\pi^2}\,\dot\pi\,(\partial_i\pi)^2
+        \;-\; \frac{\left[(c_\pi^{-2}-1) + \tfrac{2}{3}\tilde{c}_3\right]F_\pi^2}{6\,c_\pi^2}\,\dot\pi^3}
+      \;+\; \color{#ff7f0e}{
+        \frac{\rho}{F_\pi\, c_\sigma}\,\dot\pi\,\sigma
+        \;+\; \frac{\tilde\rho}{F_\pi^2}\,\dot\pi^2\,\sigma}$$</p>
+    <p style="font-size:0.85rem; color:#666;">
+      <span class="term-self">Blue: self-interactions</span> &nbsp;|&nbsp;
+      <span class="term-mix">Orange: weak mixing</span>
+      &nbsp;|&nbsp; $F_\pi = H\,(4\pi^2\Delta_\zeta^2)^{-1/4}$
+    </p>
+  </div>
+</details>
 
 <div id="loading">Loading shape data...</div>
 
