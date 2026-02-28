@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Massive Scalar Exchange — Bispectrum Shape Explorer</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f5f6fa;
+    color: #333;
+  }
+  h1 {
+    text-align: center;
+    padding: 18px 0 6px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #222;
+  }
+  .plots {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 0 20px;
+    flex-wrap: wrap;
+  }
+  .plot-box {
+    flex: 1 1 540px;
+    max-width: 640px;
+    min-width: 400px;
+    height: 420px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .controls {
+    max-width: 700px;
+    margin: 14px auto 30px;
+    padding: 0 20px;
+  }
+  .group-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #444;
+    margin: 14px 0 6px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 3px;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    gap: 8px;
+  }
+  .slider-desc {
+    flex: 0 0 160px;
+    font-size: 0.82rem;
+    color: #777;
+    text-align: right;
+    padding-right: 6px;
+  }
+  .slider-label {
+    flex: 0 0 70px;
+    font-size: 0.88rem;
+    text-align: right;
+    padding-right: 4px;
+  }
+  .slider-row input[type=range] {
+    flex: 1 1 200px;
+    accent-color: #5b7bb5;
+    cursor: pointer;
+  }
+  .slider-val {
+    flex: 0 0 65px;
+    font-size: 0.85rem;
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+    color: #555;
+  }
+  .opts {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    margin: 8px 0 4px;
+    align-items: center;
+  }
+  .opts label { font-size: 0.88rem; cursor: pointer; }
+  .opts button {
+    padding: 4px 14px;
+    font-size: 0.85rem;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    background: #eee;
+    cursor: pointer;
+  }
+  .opts button:hover { background: #ddd; }
+  #loading {
+    text-align: center;
+    padding: 60px;
+    font-size: 1.1rem;
+    color: #888;
+  }
+  footer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #aaa;
+    padding: 10px 0 20px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Massive Scalar Exchange</h1>
+
+<div id="loading">Loading shape data...</div>
+
+<div id="app" style="display:none;">
+  <div class="plots">
+    <div id="plot1d" class="plot-box"></div>
+    <div id="plot2d" class="plot-box"></div>
+  </div>
+
+  <div class="controls">
+    <div class="opts">
+      <label><input type="checkbox" id="logY"> Log y-axis</label>
+      <button id="resetBtn">Reset</button>
+    </div>
+    <div class="group-title">Self-Interactions</div>
+    <div id="self-sliders"></div>
+    <div class="group-title">Weak Mixing</div>
+    <div id="mix-sliders"></div>
+  </div>
+</div>
+
+<footer>Bispectrum Shape Explorer — O. Philcox</footer>
+
+<script>
+"use strict";
+
+// ═══════════════════════════════════════════════════
+// Constants
+// ═══════════════════════════════════════════════════
+const Delta2_zeta = 2.100549e-9;
+const H = 1.0;
+const F_pi = H / Math.pow(4.0 * Math.PI * Math.PI * Delta2_zeta, 0.25);
+const R = Math.pow(2.0, 1.0/8.0);
+const sqR = Math.sqrt(R);
+const FLOOR = 1e-30;
+
+// ═══════════════════════════════════════════════════
+// Slider definitions
+// ═══════════════════════════════════════════════════
+const DEFAULTS = {mu:2.5, lcpi:-1.0, lcsig:0.0, c3:0.0, rho:1.0, rhot:0.0};
+const SLIDER_DEFS = [
+  // [key, label(html), lo, hi, step, default, desc, group]
+  ['lcpi', 'log₁₀ c<sub>π</sub>',  -2.0,  0.0, 0.1, DEFAULTS.lcpi, 'Sound Speed', 'self'],
+  ['c3',   'c̃₃(c<sub>π</sub>⁻²−1)', -1000, 1000, 1.0, DEFAULTS.c3,
+   'π̇³ Interaction', 'self'],
+  ['mu',   'μ',                      1.0,  6.0, 0.05, DEFAULTS.mu,  'Scalar Mass', 'mix'],
+  ['lcsig','log₁₀ c<sub>σ</sub>',  -2.0,  0.0, 0.1, DEFAULTS.lcsig,'Sound Speed', 'mix'],
+  ['rho',  'ρ',                    -10.0, 10.0, 0.1, DEFAULTS.rho,
+   'π̇σ Mixing', 'mix'],
+  ['rhot', 'ρ̃',                  -250.0, 250.0, 1.0, DEFAULTS.rhot,
+   'π̇²σ Interaction', 'mix'],
+];
+
+
+// ═══════════════════════════════════════════════════
+// Globals (populated after data load)
+// ═══════════════════════════════════════════════════
+let DATA = null;       // loaded binary data
+let sliderEls = {};    // key → input element
+let valEls = {};       // key → value display span
+let useLogY = false;
+
+// ═══════════════════════════════════════════════════
+// Build slider UI
+// ═══════════════════════════════════════════════════
+function buildSliders() {
+  const selfCont = document.getElementById('self-sliders');
+  const mixCont = document.getElementById('mix-sliders');
+
+  for (const [key, label, lo, hi, step, def, desc, grp] of SLIDER_DEFS) {
+    const row = document.createElement('div');
+    row.className = 'slider-row';
+
+    const descEl = document.createElement('span');
+    descEl.className = 'slider-desc';
+    descEl.textContent = desc;
+
+    const labEl = document.createElement('span');
+    labEl.className = 'slider-label';
+    labEl.innerHTML = label;
+
+    const inp = document.createElement('input');
+    inp.type = 'range';
+    inp.min = lo; inp.max = hi; inp.step = step; inp.value = def;
+    inp.id = 'sl_' + key;
+
+    const valSpan = document.createElement('span');
+    valSpan.className = 'slider-val';
+    valSpan.textContent = fmtVal(key, def);
+
+    row.appendChild(descEl);
+    row.appendChild(labEl);
+    row.appendChild(inp);
+    row.appendChild(valSpan);
+
+    (grp === 'self' ? selfCont : mixCont).appendChild(row);
+
+    sliderEls[key] = inp;
+    valEls[key] = valSpan;
+
+    inp.addEventListener('input', function() {
+      const v = parseFloat(this.value);
+      valEls[key].textContent = fmtVal(key, v);
+      requestUpdate();
+    });
+  }
+}
+
+function fmtVal(key, v) {
+  if (key === 'mu') return v.toFixed(2);
+  if (key === 'lcpi' || key === 'lcsig') return v.toFixed(1);
+  if (key === 'rho') return v.toFixed(1);
+  return v.toFixed(0);
+}
+
+function getParams() {
+  const p = {};
+  for (const k of Object.keys(DEFAULTS)) {
+    p[k] = parseFloat(sliderEls[k].value);
+  }
+  return p;
+}
+
+function resetSliders() {
+  for (const k of Object.keys(DEFAULTS)) {
+    sliderEls[k].value = DEFAULTS[k];
+    valEls[k].textContent = fmtVal(k, DEFAULTS[k]);
+  }
+  requestUpdate();
+}
+
+// ═══════════════════════════════════════════════════
+// Data loading
+// ═══════════════════════════════════════════════════
+async function loadData() {
+  const resp = await fetch('shape_data.bin');
+  const buf = await resp.arrayBuffer();
+  const f64 = new Float64Array(buf);
+
+  let off = 0;
+  const N_bins = f64[off++];
+  const N_mu = f64[off++];
+  const N_log10c = f64[off++];
+  const N_1d = f64[off++];
+  off += 2;  // reserved
+
+  const read = (n) => { const a = f64.subarray(off, off+n); off += n; return a; };
+
+  DATA = {
+    N_bins, N_mu, N_log10c, N_1d,
+    xs:         read(N_bins),
+    ys:         read(N_bins),
+    del_grid:   read(N_bins),
+    dot_grid:   read(N_bins),
+    mu_grid:    read(N_mu),
+    log10c_grid:read(N_log10c),
+    s_dot_sc:   read(N_mu * N_log10c * N_bins),  // pre-scaled, [mu,log10c,bin]
+    s_del_sc:   read(N_mu * N_log10c * N_bins),
+    mask_1d:    read(N_bins),
+    x_1d:       read(N_1d),
+  };
+}
+
+// ═══════════════════════════════════════════════════
+// Bilinear interpolation on (mu, log10c) grid
+// Returns array of N_bins values
+// ═══════════════════════════════════════════════════
+function interpExchange(scaled_arr, mu, log10c) {
+  const {N_mu, N_log10c, N_bins, mu_grid, log10c_grid} = DATA;
+
+  // Find indices
+  let imu = 0;
+  for (let i = 0; i < N_mu - 1; i++) {
+    if (mu_grid[i+1] > mu) break;
+    imu = i;
+  }
+  if (imu >= N_mu - 1) imu = N_mu - 2;
+
+  let ic = 0;
+  for (let i = 0; i < N_log10c - 1; i++) {
+    if (log10c_grid[i+1] > log10c) break;
+    ic = i;
+  }
+  if (ic >= N_log10c - 1) ic = N_log10c - 2;
+
+  // Fractional positions
+  const tmu = (mu - mu_grid[imu]) / (mu_grid[imu+1] - mu_grid[imu]);
+  const tc = (log10c - log10c_grid[ic]) / (log10c_grid[ic+1] - log10c_grid[ic]);
+
+  // Clamp
+  const tm = Math.max(0, Math.min(1, tmu));
+  const tcl = Math.max(0, Math.min(1, tc));
+
+  // Bilinear: f(mu,c) = (1-tm)*(1-tc)*f00 + tm*(1-tc)*f10 + (1-tm)*tc*f01 + tm*tc*f11
+  const result = new Float64Array(N_bins);
+  const stride_c = N_bins;
+  const stride_mu = N_log10c * N_bins;
+  const base00 = imu * stride_mu + ic * stride_c;
+  const base10 = (imu+1) * stride_mu + ic * stride_c;
+  const base01 = imu * stride_mu + (ic+1) * stride_c;
+  const base11 = (imu+1) * stride_mu + (ic+1) * stride_c;
+
+  const w00 = (1-tm) * (1-tcl);
+  const w10 = tm * (1-tcl);
+  const w01 = (1-tm) * tcl;
+  const w11 = tm * tcl;
+
+  for (let b = 0; b < N_bins; b++) {
+    result[b] = w00*scaled_arr[base00+b] + w10*scaled_arr[base10+b]
+              + w01*scaled_arr[base01+b] + w11*scaled_arr[base11+b];
+  }
+  return result;
+}
+
+// ═══════════════════════════════════════════════════
+// Compute shape
+// ═══════════════════════════════════════════════════
+function computeShape(p) {
+  const cpi = Math.pow(10, p.lcpi);
+  const csigma = Math.pow(10, p.lcsig);
+  const crel = cpi / csigma;
+
+  const lam1 = 0.5 * (1 - cpi*cpi) / (F_pi*F_pi) / (csigma*csigma) * Math.pow(crel, 1.5);
+  const lam2 = -0.5 / (F_pi*F_pi) * Math.pow(crel, 1.5) * (1 - cpi*cpi + 2.0/3.0 * p.c3);
+  const rk1 = p.rho*p.rho / (F_pi*F_pi) / (csigma*csigma) * Math.pow(crel, 1.5);
+  const rk2 = p.rho * p.rhot / (F_pi*F_pi) * Math.pow(crel, 1.5);
+
+  const N = DATA.N_bins;
+  const {del_grid, dot_grid} = DATA;
+
+  // Self-interaction coefficients
+  const coeff_del = -85.0/324.0 * F_pi*F_pi / 0.5 * Math.pow(crel, -3.5);
+  const coeff_dot = 10.0/243.0 * 1.5/0.5 * Math.pow(crel, -1.5) * F_pi*F_pi;
+
+  // Exchange shapes (interpolate pre-scaled, then divide by scale)
+  const log10c_rel = Math.log10(crel);
+  const sc_dot = p.mu*p.mu * (Math.pow(crel, -0.5) + 0.1*Math.pow(crel, 1.5));
+  const sc_del = p.mu*p.mu * crel*crel * (Math.pow(crel, -0.5) + 0.1*Math.pow(crel, 1.5));
+
+  const exch_dot_raw = interpExchange(DATA.s_dot_sc, p.mu, log10c_rel);
+  const exch_del_raw = interpExchange(DATA.s_del_sc, p.mu, log10c_rel);
+
+  const s_self = new Float64Array(N);
+  const s_exch = new Float64Array(N);
+  const s_tot = new Float64Array(N);
+
+  for (let i = 0; i < N; i++) {
+    const sd = del_grid[i] * coeff_del;
+    const st = dot_grid[i] * coeff_dot;
+    s_self[i] = lam1 * sd + lam2 * st;
+
+    const ed = exch_del_raw[i] / sc_del;
+    const et = exch_dot_raw[i] / sc_dot;
+    s_exch[i] = rk1 * ed + rk2 * et;
+
+    s_tot[i] = s_self[i] + s_exch[i];
+  }
+
+  return {s_self, s_exch, s_tot};
+}
+
+// ═══════════════════════════════════════════════════
+// Plotting
+// ═══════════════════════════════════════════════════
+let plotsInitialized = false;
+
+function updatePlots() {
+  const p = getParams();
+  const {s_self, s_exch, s_tot} = computeShape(p);
+  const {x_1d, mask_1d, xs, ys, N_bins, N_1d} = DATA;
+
+  // Extract 1D slice
+  const self1d = new Float64Array(N_1d);
+  const exch1d = new Float64Array(N_1d);
+  const tot1d = new Float64Array(N_1d);
+  let j = 0;
+  for (let i = 0; i < N_bins; i++) {
+    if (mask_1d[i] > 0.5) {
+      self1d[j] = s_self[i] / x_1d[j];
+      exch1d[j] = s_exch[i] / x_1d[j];
+      tot1d[j] = s_tot[i] / x_1d[j];
+      j++;
+    }
+  }
+
+  const cpi = Math.pow(10, p.lcpi).toFixed(2);
+  const csig = Math.pow(10, p.lcsig).toFixed(2);
+  const title1 = `μ=${p.mu.toFixed(2)}, c<sub>π</sub>=${cpi}, c<sub>σ</sub>=${csig}`;
+  const title2 = `ρ=${p.rho.toFixed(1)}, ρ̃=${p.rhot.toFixed(1)}, c̃₃=${p.c3.toFixed(0)}`;
+
+  // --- 1D Plot ---
+  const traces1d = [];
+  const comps = [
+    {arr: self1d, name: 'Self-interaction', color: '#1f77b4'},
+    {arr: exch1d, name: 'Weak mixing', color: '#ff7f0e'},
+    {arr: tot1d,  name: 'Total', color: '#000000'},
+  ];
+
+  if (useLogY) {
+    // Log mode: positive solid, |negative| dotted
+    for (const {arr, name, color} of comps) {
+      const pos_y = [], neg_y = [], xv = [];
+      const pos_yn = [], neg_yn = [], xvn = [];
+      for (let i = 0; i < N_1d; i++) {
+        xv.push(x_1d[i]);
+        pos_y.push(arr[i] > FLOOR ? arr[i] : null);
+        xvn.push(x_1d[i]);
+        neg_yn.push(-arr[i] > FLOOR ? -arr[i] : null);
+      }
+      traces1d.push({x: xv, y: pos_y, name, mode: 'lines',
+        line: {color, width: 2, dash: 'solid'}, showlegend: true});
+      traces1d.push({x: xvn, y: neg_yn, name: name+' (neg)', mode: 'lines',
+        line: {color, width: 2, dash: 'dot'}, showlegend: false});
+    }
+  } else {
+    // Linear mode: just plot the values
+    for (const {arr, name, color} of comps) {
+      const xv = [], yv = [];
+      for (let i = 0; i < N_1d; i++) {
+        xv.push(x_1d[i]);
+        yv.push(arr[i]);
+      }
+      traces1d.push({x: xv, y: yv, name, mode: 'lines',
+        line: {color, width: 2}, showlegend: true});
+    }
+  }
+
+  const yAxisType1d = useLogY ? 'log' : 'linear';
+  const layout1d = {
+    title: {text: title1, font: {size: 14}},
+    xaxis: {type: 'log', title: 'x = k₁/k₃', range: [-3, 0]},
+    yaxis: {type: yAxisType1d, title: 'S(x,1) / x', autorange: true},
+    legend: {x: 0.02, y: 0.98, font: {size: 11}},
+    margin: {l: 60, r: 20, t: 40, b: 50},
+    showlegend: true,
+  };
+
+  // Add zero line in linear mode
+  if (!useLogY) {
+    layout1d.shapes = [{
+      type: 'line', x0: 1e-3, x1: 1, y0: 0, y1: 0, xref: 'x', yref: 'y',
+      line: {color: 'black', width: 1, dash: 'dash'}
+    }];
+  }
+
+  // --- 2D Plot (heatmap via scatter with markers) ---
+  // Build custom colored rectangles using Plotly shapes
+  const vm = Math.max(...Array.from(s_tot).map(Math.abs));
+
+  // Use scatter for the 2D cells (faster than shapes)
+  const x2d = [], y2d = [], z2d = [], customdata = [];
+  for (let i = 0; i < N_bins; i++) {
+    x2d.push(xs[i]);
+    y2d.push(ys[i]);
+    z2d.push(s_tot[i]);
+  }
+
+  // Geometry line points
+  const xline = [];
+  const yline = [];
+  for (let i = 0; i <= 200; i++) {
+    const xv = i / 200;
+    xline.push(xv);
+    yline.push(0.5 + Math.abs(0.5 - xv));
+  }
+
+  const trace2d = {
+    x: x2d, y: y2d,
+    mode: 'markers',
+    type: 'scatter',
+    marker: {
+      color: z2d,
+      colorscale: 'RdBu',
+      reversescale: true,
+      cmin: -vm, cmax: vm,
+      size: 14,
+      symbol: 'square',
+      colorbar: {title: 'S(x,y)', len: 0.9},
+    },
+    showlegend: false,
+    hovertemplate: 'x=%{x:.3f}<br>y=%{y:.3f}<br>S=%{marker.color:.3e}<extra></extra>',
+  };
+
+  const geomLine = {
+    x: xline, y: yline, mode: 'lines',
+    line: {color: 'black', width: 0.5, dash: 'solid'},
+    showlegend: false, hoverinfo: 'skip',
+  };
+
+  const layout2d = {
+    title: {text: title2, font: {size: 14}},
+    xaxis: {title: 'x = k₁/k₃', range: [0, sqR]},
+    yaxis: {title: 'y = k₂/k₃', range: [0.5/sqR, sqR]},
+    margin: {l: 60, r: 20, t: 40, b: 50},
+    shapes: [{
+      type: 'line', x0: 0, x1: sqR, y0: 1, y1: 1, xref: 'x', yref: 'y',
+      line: {color: 'black', width: 0.5}
+    }],
+  };
+
+  if (!plotsInitialized) {
+    Plotly.newPlot('plot1d', traces1d, layout1d, {responsive: true, displayModeBar: false});
+    Plotly.newPlot('plot2d', [trace2d, geomLine], layout2d, {responsive: true, displayModeBar: false});
+    plotsInitialized = true;
+  } else {
+    Plotly.react('plot1d', traces1d, layout1d);
+    Plotly.react('plot2d', [trace2d, geomLine], layout2d);
+  }
+}
+
+// Throttle updates
+let _updatePending = false;
+function requestUpdate() {
+  if (_updatePending) return;
+  _updatePending = true;
+  requestAnimationFrame(() => {
+    _updatePending = false;
+    updatePlots();
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════════
+async function init() {
+  buildSliders();
+
+  try {
+    await loadData();
+  } catch(e) {
+    document.getElementById('loading').textContent = 'Error loading data: ' + e.message;
+    return;
+  }
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = '';
+
+  // Log checkbox
+  const logCB = document.getElementById('logY');
+  logCB.checked = false;
+  logCB.addEventListener('change', () => {
+    useLogY = logCB.checked;
+    updatePlots();
+  });
+
+  // Reset button
+  document.getElementById('resetBtn').addEventListener('click', resetSliders);
+
+  // Initial plot
+  updatePlots();
+}
+
+init();
+</script>
+</body>
+</html>
