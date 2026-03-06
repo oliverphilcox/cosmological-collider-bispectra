@@ -168,6 +168,7 @@
   <div class="controls">
     <div class="opts">
       <label><input type="checkbox" id="logY"> Log y-axis</label>
+      <label><input type="checkbox" id="divX" checked> Divide by x</label>
       <button id="resetBtn">Reset</button>
     </div>
     <div class="group-title">Self-Interactions</div>
@@ -216,6 +217,7 @@ let DATA = null;       // loaded binary data
 let sliderEls = {};    // key → input element
 let valEls = {};       // key → value display span
 let useLogY = false;
+let divideByX = true;
 
 // ═══════════════════════════════════════════════════
 // Build slider UI
@@ -484,9 +486,10 @@ function updatePlots() {
   let j = 0;
   for (let i = 0; i < N_bins; i++) {
     if (mask_1d[i] > 0.5) {
-      self1d[j] = s_self[i] / x_1d[j];
-      exch1d[j] = s_exch[i] / x_1d[j];
-      tot1d[j] = s_tot[i] / x_1d[j];
+      const denom = divideByX ? x_1d[j] : 1.0;
+      self1d[j] = s_self[i] / denom;
+      exch1d[j] = s_exch[i] / denom;
+      tot1d[j] = s_tot[i] / denom;
       j++;
     }
   }
@@ -533,7 +536,7 @@ function updatePlots() {
     title: {text: title1, font: {size: 14}},
     xaxis: {type: 'log', title: {text: 'x = k₁/k₃', font: {size: 13}}, range: [-3, 0]},
     yaxis: {type: useLogY ? 'log' : 'linear',
-            title: {text: 'S(x,1) / x', font: {size: 13}}, autorange: true},
+            title: {text: divideByX ? 'S(x,1) / x' : 'S(x,1)', font: {size: 13}}, autorange: true},
     legend: {x: 0.98, y: 0.98, xanchor: 'right', yanchor: 'top',
              bgcolor: 'rgba(255,255,255,0.85)', bordercolor: '#ccc', borderwidth: 1,
              font: {size: 11}},
@@ -649,6 +652,14 @@ async function init() {
   logCB.checked = false;
   logCB.addEventListener('change', () => {
     useLogY = logCB.checked;
+    updatePlots();
+  });
+
+  // Divide-by-x checkbox
+  const divXCB = document.getElementById('divX');
+  divXCB.checked = true;
+  divXCB.addEventListener('change', () => {
+    divideByX = divXCB.checked;
     updatePlots();
   });
 
