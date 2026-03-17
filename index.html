@@ -21,6 +21,33 @@
     font-weight: 700;
     color: #222;
   }
+  /* ── Plot tabs (mobile only) ── */
+  .plot-tabs {
+    display: none; /* hidden on desktop */
+    justify-content: center;
+    gap: 0;
+    margin: 0 20px 6px;
+  }
+  .plot-tabs button {
+    flex: 1;
+    max-width: 160px;
+    padding: 7px 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: 1px solid #bbb;
+    background: #e8e8e8;
+    color: #555;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .plot-tabs button:first-child { border-radius: 6px 0 0 6px; }
+  .plot-tabs button:last-child  { border-radius: 0 6px 6px 0; }
+  .plot-tabs button.active {
+    background: #5b7bb5;
+    color: #fff;
+    border-color: #5b7bb5;
+  }
+  /* ── Plots ── */
   .plots {
     display: flex;
     justify-content: center;
@@ -37,6 +64,7 @@
     border-radius: 8px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
   }
+  /* ── Controls ── */
   .controls {
     max-width: 700px;
     margin: 14px auto 30px;
@@ -87,6 +115,7 @@
     gap: 18px;
     margin: 8px 0 4px;
     align-items: center;
+    flex-wrap: wrap;
   }
   .opts label { font-size: 0.88rem; cursor: pointer; }
   .opts button {
@@ -135,6 +164,28 @@
     color: #aaa;
     padding: 10px 0 20px;
   }
+
+  /* ── Mobile (< 800px) ── */
+  @media (max-width: 800px) {
+    h1 { font-size: 1.2rem; padding: 12px 0 4px; }
+    .plot-tabs { display: flex; }
+    .plots { padding: 0 8px; gap: 0; }
+    .plot-box {
+      min-width: 0;
+      width: 100%;
+      flex: none;
+      height: 350px;
+    }
+    .plot-box.hidden-mobile { display: none; }
+    .controls { padding: 0 10px; margin-top: 8px; }
+    .slider-desc { display: none; }
+    .slider-label { flex: 0 0 55px; font-size: 0.82rem; }
+    .slider-val { flex: 0 0 50px; font-size: 0.8rem; }
+    .group-title { font-size: 0.88rem; margin: 10px 0 4px; }
+    .opts { gap: 10px; margin: 6px 0 2px; }
+    .opts label { font-size: 0.82rem; }
+    details.lagrangian { font-size: 0.8rem; padding: 0 10px; }
+  }
 </style>
 </head>
 <body>
@@ -160,6 +211,10 @@
 <div id="loading">Loading shape data...</div>
 
 <div id="app" style="display:none;">
+  <div class="plot-tabs">
+    <button id="tab1d" class="active">1D Slice</button>
+    <button id="tab2d">2D Shape</button>
+  </div>
   <div class="plots">
     <div id="plot1d" class="plot-box"></div>
     <div id="plot2d" class="plot-box"></div>
@@ -198,7 +253,6 @@ const FLOOR = 1e-30;
 // ═══════════════════════════════════════════════════
 const DEFAULTS = {mu:2.5, lcpi:-1.0, lcsig:0.0, c3:0.0, rho:1.0, rhot:0.0};
 const SLIDER_DEFS = [
-  // [key, label(html), lo, hi, step, default, desc, group]
   ['lcpi', 'log₁₀ c<sub>π</sub>',  -2.0,  0.0, 0.05, DEFAULTS.lcpi, 'Sound Speed', 'self'],
   ['c3',   'c̃₃(c<sub>π</sub>⁻²−1)', -1000, 1000, 0.5, DEFAULTS.c3,
    'π̇³ Interaction', 'self'],
@@ -211,13 +265,40 @@ const SLIDER_DEFS = [
 ];
 
 // ═══════════════════════════════════════════════════
-// Globals (populated after data load)
+// Globals
 // ═══════════════════════════════════════════════════
-let DATA = null;       // loaded binary data
-let sliderEls = {};    // key → input element
-let valEls = {};       // key → value display span
+let DATA = null;
+let sliderEls = {};
+let valEls = {};
 let useLogY = false;
 let divideByX = true;
+let activeTab = '1d';  // '1d' or '2d'
+
+// ═══════════════════════════════════════════════════
+// Mobile detection & tab switching
+// ═══════════════════════════════════════════════════
+function isMobile() { return window.innerWidth <= 800; }
+
+function setActiveTab(tab) {
+  activeTab = tab;
+  const el1d = document.getElementById('plot1d');
+  const el2d = document.getElementById('plot2d');
+  const btn1d = document.getElementById('tab1d');
+  const btn2d = document.getElementById('tab2d');
+  if (isMobile()) {
+    el1d.classList.toggle('hidden-mobile', tab !== '1d');
+    el2d.classList.toggle('hidden-mobile', tab !== '2d');
+  } else {
+    el1d.classList.remove('hidden-mobile');
+    el2d.classList.remove('hidden-mobile');
+  }
+  btn1d.classList.toggle('active', tab === '1d');
+  btn2d.classList.toggle('active', tab === '2d');
+  // Plotly needs a resize after visibility change
+  requestAnimationFrame(() => {
+    Plotly.Plots.resize(tab === '1d' ? el1d : el2d);
+  });
+}
 
 // ═══════════════════════════════════════════════════
 // Build slider UI
@@ -278,7 +359,6 @@ function getParams() {
   for (const k of Object.keys(DEFAULTS)) {
     p[k] = parseFloat(sliderEls[k].value);
   }
-  // mu=0 on slider maps to mu=0.001 internally (avoids division by zero)
   if (p.mu < 0.01) p.mu = 0.001;
   return p;
 }
@@ -304,7 +384,7 @@ async function loadData() {
   const N_mu = f64[off++];
   const N_log10c = f64[off++];
   const N_1d = f64[off++];
-  off += 2;  // reserved
+  off += 2;
 
   const read = (n) => { const a = f64.subarray(off, off+n); off += n; return a; };
 
@@ -316,7 +396,7 @@ async function loadData() {
     dot_grid:   read(N_bins),
     mu_grid:    read(N_mu),
     log10c_grid:read(N_log10c),
-    s_dot_sc:   read(N_mu * N_log10c * N_bins),  // pre-scaled, [mu,log10c,bin]
+    s_dot_sc:   read(N_mu * N_log10c * N_bins),
     s_del_sc:   read(N_mu * N_log10c * N_bins),
     mask_1d:    read(N_bins),
     x_1d:       read(N_1d),
@@ -325,15 +405,11 @@ async function loadData() {
 
 // ═══════════════════════════════════════════════════
 // Build 2D heatmap grid structure
-// (called once after data load)
 // ═══════════════════════════════════════════════════
 function buildGrid() {
   const {xs, ys, N_bins} = DATA;
-
-  // Round to 8 decimal places to avoid floating-point duplicates
   const round8 = v => Math.round(v * 1e8) / 1e8;
 
-  // Get unique sorted x and y bin centers
   const uxSet = new Set();
   const uySet = new Set();
   for (let i = 0; i < N_bins; i++) {
@@ -344,13 +420,11 @@ function buildGrid() {
   const uy = [...uySet].sort((a,b) => a - b);
   const nx = ux.length, ny = uy.length;
 
-  // Index lookup maps
   const xIdx = new Map();
   ux.forEach((v, i) => xIdx.set(v, i));
   const yIdx = new Map();
   uy.forEach((v, i) => yIdx.set(v, i));
 
-  // Map each bin to its (ix, iy) grid position
   const binIx = new Int32Array(N_bins);
   const binIy = new Int32Array(N_bins);
   for (let i = 0; i < N_bins; i++) {
@@ -358,7 +432,6 @@ function buildGrid() {
     binIy[i] = yIdx.get(round8(ys[i]));
   }
 
-  // Build edge arrays: each cell spans [center/sqR, center*sqR]
   const xEdges = new Array(nx + 1);
   for (let i = 0; i < nx; i++) xEdges[i] = ux[i] / sqR;
   xEdges[nx] = ux[nx-1] * sqR;
@@ -367,24 +440,18 @@ function buildGrid() {
   for (let i = 0; i < ny; i++) yEdges[i] = uy[i] / sqR;
   yEdges[ny] = uy[ny-1] * sqR;
 
-  DATA.ux = ux;
-  DATA.uy = uy;
-  DATA.nx = nx;
-  DATA.ny = ny;
-  DATA.binIx = binIx;
-  DATA.binIy = binIy;
-  DATA.xEdges = xEdges;
-  DATA.yEdges = yEdges;
+  DATA.ux = ux; DATA.uy = uy;
+  DATA.nx = nx; DATA.ny = ny;
+  DATA.binIx = binIx; DATA.binIy = binIy;
+  DATA.xEdges = xEdges; DATA.yEdges = yEdges;
 }
 
 // ═══════════════════════════════════════════════════
-// Bilinear interpolation on (mu, log10c) grid
-// Returns array of N_bins values
+// Bilinear interpolation
 // ═══════════════════════════════════════════════════
 function interpExchange(scaled_arr, mu, log10c) {
   const {N_mu, N_log10c, N_bins, mu_grid, log10c_grid} = DATA;
 
-  // Find indices
   let imu = 0;
   for (let i = 0; i < N_mu - 1; i++) {
     if (mu_grid[i+1] > mu) break;
@@ -399,7 +466,6 @@ function interpExchange(scaled_arr, mu, log10c) {
   }
   if (ic >= N_log10c - 1) ic = N_log10c - 2;
 
-  // Fractional positions (clamped to [0,1])
   const tm = Math.max(0, Math.min(1,
     (mu - mu_grid[imu]) / (mu_grid[imu+1] - mu_grid[imu])));
   const tc = Math.max(0, Math.min(1,
@@ -441,11 +507,9 @@ function computeShape(p) {
   const N = DATA.N_bins;
   const {del_grid, dot_grid} = DATA;
 
-  // Self-interaction coefficients
   const coeff_del = -85.0/324.0 * F_pi*F_pi / 0.5 * Math.pow(crel, -3.5);
   const coeff_dot = 10.0/243.0 * 1.5/0.5 * Math.pow(crel, -1.5) * F_pi*F_pi;
 
-  // Exchange shapes (interpolate pre-scaled, then divide by scale)
   const log10c_rel = Math.log10(crel);
   const sc_dot = p.mu*p.mu * (Math.pow(crel, -0.5) + 0.1*Math.pow(crel, 1.5));
   const sc_del = p.mu*p.mu * crel*crel * (Math.pow(crel, -0.5) + 0.1*Math.pow(crel, 1.5));
@@ -458,14 +522,8 @@ function computeShape(p) {
   const s_tot = new Float64Array(N);
 
   for (let i = 0; i < N; i++) {
-    const sd = del_grid[i] * coeff_del;
-    const st = dot_grid[i] * coeff_dot;
-    s_self[i] = lam1 * sd + lam2 * st;
-
-    const ed = exch_del_raw[i] / sc_del;
-    const et = exch_dot_raw[i] / sc_dot;
-    s_exch[i] = rk1 * ed + rk2 * et;
-
+    s_self[i] = lam1 * del_grid[i] * coeff_del + lam2 * dot_grid[i] * coeff_dot;
+    s_exch[i] = rk1 * exch_del_raw[i] / sc_del + rk2 * exch_dot_raw[i] / sc_dot;
     s_tot[i] = s_self[i] + s_exch[i];
   }
 
@@ -499,7 +557,8 @@ function updatePlots() {
 
   const cpi = Math.pow(10, p.lcpi).toFixed(2);
   const csig = Math.pow(10, p.lcsig).toFixed(2);
-  const title1 = `μ=${p.mu.toFixed(2)}, c<sub>π</sub>=${cpi}, c<sub>σ</sub>=${csig}`;
+  const muLabel = p.mu < 0.01 ? '0' : p.mu.toFixed(2);
+  const title1 = `μ=${muLabel}, c<sub>π</sub>=${cpi}, c<sub>σ</sub>=${csig}`;
   const title2 = `ρ=${p.rho.toFixed(1)}, ρ̃=${p.rhot.toFixed(1)}, c̃₃=${p.c3.toFixed(0)}`;
 
   // ── 1D Plot traces ──
@@ -553,11 +612,9 @@ function updatePlots() {
   // ── 2D heatmap ──
   const vm = Math.max(...Array.from(s_tot).map(Math.abs));
 
-  // Build z matrix [ny][nx], NaN for empty cells
   const z = [];
   for (let iy = 0; iy < ny; iy++) {
-    const row = new Array(nx).fill(null);
-    z.push(row);
+    z.push(new Array(nx).fill(null));
   }
   for (let i = 0; i < N_bins; i++) {
     z[binIy[i]][binIx[i]] = s_tot[i];
@@ -565,9 +622,7 @@ function updatePlots() {
 
   const traceHeatmap = {
     type: 'heatmap',
-    x: xEdges,
-    y: yEdges,
-    z: z,
+    x: xEdges, y: yEdges, z: z,
     colorscale: 'RdBu',
     reversescale: false,
     zmin: -vm, zmax: vm,
@@ -575,14 +630,11 @@ function updatePlots() {
     hoverongaps: false,
     colorbar: {
       title: {text: 'S(x,y)', font: {size: 13}},
-      len: 0.85,
-      thickness: 18,
-      exponentformat: 'e',
+      len: 0.85, thickness: 18, exponentformat: 'e',
     },
     hovertemplate: 'x=%{x:.3f}<br>y=%{y:.3f}<br>S=%{z:.3e}<extra></extra>',
   };
 
-  // Geometry lines: y=1 and triangle boundary y = 0.5 + |0.5 - x|
   const xline = [], yline = [];
   for (let i = 0; i <= 300; i++) {
     const xv = i / 300;
@@ -649,6 +701,23 @@ async function init() {
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('app').style.display = '';
+
+  // Tab switching
+  document.getElementById('tab1d').addEventListener('click', () => setActiveTab('1d'));
+  document.getElementById('tab2d').addEventListener('click', () => setActiveTab('2d'));
+
+  // Apply initial mobile state
+  if (isMobile()) setActiveTab('1d');
+  window.addEventListener('resize', () => {
+    if (isMobile()) {
+      setActiveTab(activeTab);
+    } else {
+      document.getElementById('plot1d').classList.remove('hidden-mobile');
+      document.getElementById('plot2d').classList.remove('hidden-mobile');
+      Plotly.Plots.resize('plot1d');
+      Plotly.Plots.resize('plot2d');
+    }
+  });
 
   // Log checkbox
   const logCB = document.getElementById('logY');
