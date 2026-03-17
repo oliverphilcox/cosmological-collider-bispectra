@@ -199,14 +199,14 @@ const FLOOR = 1e-30;
 const DEFAULTS = {mu:2.5, lcpi:-1.0, lcsig:0.0, c3:0.0, rho:1.0, rhot:0.0};
 const SLIDER_DEFS = [
   // [key, label(html), lo, hi, step, default, desc, group]
-  ['lcpi', 'log₁₀ c<sub>π</sub>',  -2.0,  0.0, 0.1, DEFAULTS.lcpi, 'Sound Speed', 'self'],
-  ['c3',   'c̃₃(c<sub>π</sub>⁻²−1)', -1000, 1000, 1.0, DEFAULTS.c3,
+  ['lcpi', 'log₁₀ c<sub>π</sub>',  -2.0,  0.0, 0.05, DEFAULTS.lcpi, 'Sound Speed', 'self'],
+  ['c3',   'c̃₃(c<sub>π</sub>⁻²−1)', -1000, 1000, 0.5, DEFAULTS.c3,
    'π̇³ Interaction', 'self'],
-  ['mu',   'μ',                      1.0,  6.0, 0.05, DEFAULTS.mu,  'Scalar Mass', 'mix'],
-  ['lcsig','log₁₀ c<sub>σ</sub>',  -2.0,  0.0, 0.1, DEFAULTS.lcsig,'Sound Speed', 'mix'],
-  ['rho',  'ρ',                    -10.0, 10.0, 0.1, DEFAULTS.rho,
+  ['mu',   'μ',                      0.0,  6.0, 0.02, DEFAULTS.mu,  'Scalar Mass', 'mix'],
+  ['lcsig','log₁₀ c<sub>σ</sub>',  -2.0,  0.0, 0.05, DEFAULTS.lcsig,'Sound Speed', 'mix'],
+  ['rho',  'ρ',                    -10.0, 10.0, 0.05, DEFAULTS.rho,
    'π̇σ Mixing', 'mix'],
-  ['rhot', 'ρ̃',                  -250.0, 250.0, 1.0, DEFAULTS.rhot,
+  ['rhot', 'ρ̃',                  -250.0, 250.0, 0.5, DEFAULTS.rhot,
    'π̇²σ Interaction', 'mix'],
 ];
 
@@ -266,9 +266,10 @@ function buildSliders() {
 }
 
 function fmtVal(key, v) {
-  if (key === 'mu') return v.toFixed(2);
-  if (key === 'lcpi' || key === 'lcsig') return v.toFixed(1);
-  if (key === 'rho') return v.toFixed(1);
+  if (key === 'mu') return v < 0.01 ? '0' : v.toFixed(2);
+  if (key === 'lcpi' || key === 'lcsig') return v.toFixed(2);
+  if (key === 'rho') return v.toFixed(2);
+  if (key === 'rhot') return v.toFixed(1);
   return v.toFixed(0);
 }
 
@@ -277,6 +278,8 @@ function getParams() {
   for (const k of Object.keys(DEFAULTS)) {
     p[k] = parseFloat(sliderEls[k].value);
   }
+  // mu=0 on slider maps to mu=0.001 internally (avoids division by zero)
+  if (p.mu < 0.01) p.mu = 0.001;
   return p;
 }
 
