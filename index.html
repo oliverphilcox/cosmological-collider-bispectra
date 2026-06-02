@@ -199,8 +199,8 @@
     <p>$$\quad \color{#1f77b4}{-\,\lambda_1\frac{(\partial_i\pi_c)^2}{a^2}\dot{\pi}_c - \lambda_2\,\dot{\pi}_c^3} \;\;\color{#ff7f0e}{-\,\frac{\kappa_1}{2}\frac{(\partial_i\pi_c)^2}{a^2}\sigma_c - \frac{\kappa_2}{2}\dot{\pi}_c^2\,\sigma_c}$$</p>
     <p style="font-size:0.85rem; margin-top:6px;">where $\pi_c,\,\sigma_c$ are canonically normalized fields and</p>
     <p>$$c_{\rm rel} = \frac{c_\pi}{c_\sigma},\quad \lambda_1 = \frac{(1-c_\pi^2)}{2\,f_\pi^2\,c_\sigma^2}\,c_{\rm rel}^{3/2},\quad \lambda_2 = -\frac{(1-c_\pi^2)}{2\,f_\pi^2}\,c_{\rm rel}^{3/2}\!\left(1+\frac{2}{3}\frac{\tilde{c}_3}{c_\pi^2}\right)$$</p>
-    <p>$$m = c_\sigma\,m_\sigma,\quad \kappa_1 = \frac{\rho}{f_\pi^2\,c_\sigma^2}\,c_{\rm rel}^{3/2},\quad \kappa_2 = \frac{\tilde{\rho}}{f_\pi^2}\,c_{\rm rel}^{3/2}$$</p>
-    <p style="font-size:0.85rem;">with $\mu = \sqrt{m^2/H^2 - 9/4}$ and $f_\pi = H\,(4\pi^2\Delta_\zeta^2)^{-1/4}$.</p>
+    <p>$$m = c_\sigma\,m_\sigma,\quad \kappa_1 = \frac{\rho}{f_\pi^2\,c_\sigma^2}\,c_{\rm rel}^{3/2},\quad \kappa_2 = -\frac{(\rho-\Delta\rho)}{f_\pi^2}\,c_{\rm rel}^{3/2}$$</p>
+    <p style="font-size:0.85rem;">with $\mu = \sqrt{m^2/H^2 - 9/4}$, $f_\pi = H\,(4\pi^2\Delta_\zeta^2)^{-1/4}$, and $\Delta\rho = 8\,\frac{\tilde{M}_3^3}{f_\pi^2}\,c_\sigma^{5/2}\,c_{\rm rel}^{3/2}$ an independent coupling ($\Delta\rho=0$ is boost-invariant).</p>
     <p style="font-size:0.85rem; color:#666;">
       <span class="term-self">Blue: self-interactions</span> &nbsp;|&nbsp;
       <span class="term-mix">Orange: mixing/exchange</span>
@@ -251,7 +251,7 @@ const FLOOR = 1e-30;
 // ═══════════════════════════════════════════════════
 // Slider definitions
 // ═══════════════════════════════════════════════════
-const DEFAULTS = {mu:2.5, lcpi:-1.0, lcsig:0.0, c3:0.0, rho:1.0, rhot:0.0};
+const DEFAULTS = {mu:2.5, lcpi:-1.0, lcsig:0.0, c3:0.0, rho:1.0, drho:0.0};
 const SLIDER_DEFS = [
   ['lcpi', 'log₁₀ c<sub>π</sub>',  -2.0,  0.0, 0.05, DEFAULTS.lcpi, 'Sound Speed', 'self'],
   ['c3',   'c̃₃(c<sub>π</sub>⁻²−1)', -1000, 1000, 0.5, DEFAULTS.c3,
@@ -260,7 +260,7 @@ const SLIDER_DEFS = [
   ['lcsig','log₁₀ c<sub>σ</sub>',  -2.0,  0.0, 0.05, DEFAULTS.lcsig,'Sound Speed', 'mix'],
   ['rho',  'ρ',                    -10.0, 10.0, 0.05, DEFAULTS.rho,
    'π̇σ Mixing', 'mix'],
-  ['rhot', 'ρ̃',                  -250.0, 250.0, 0.5, DEFAULTS.rhot,
+  ['drho', 'Δρ',                  -250.0, 250.0, 0.5, DEFAULTS.drho,
    'π̇²σ Interaction', 'mix'],
 ];
 
@@ -350,7 +350,7 @@ function fmtVal(key, v) {
   if (key === 'mu') return v < 0.01 ? '0' : v.toFixed(2);
   if (key === 'lcpi' || key === 'lcsig') return v.toFixed(2);
   if (key === 'rho') return v.toFixed(2);
-  if (key === 'rhot') return v.toFixed(1);
+  if (key === 'drho') return v.toFixed(1);
   return v.toFixed(0);
 }
 
@@ -502,7 +502,8 @@ function computeShape(p) {
   const lam1 = 0.5 * (1 - cpi*cpi) / (F_pi*F_pi) / (csigma*csigma) * Math.pow(crel, 1.5);
   const lam2 = -0.5 / (F_pi*F_pi) * Math.pow(crel, 1.5) * (1 - cpi*cpi + 2.0/3.0 * p.c3);
   const rk1 = p.rho*p.rho / (F_pi*F_pi) / (csigma*csigma) * Math.pow(crel, 1.5);
-  const rk2 = p.rho * p.rhot / (F_pi*F_pi) * Math.pow(crel, 1.5);
+  // kappa_2 = -(rho - Deltarho) c_rel^3/2 / f_pi^2  =>  rho*kappa_2 = rho*(Deltarho - rho) c_rel^3/2 / f_pi^2
+  const rk2 = p.rho * (p.drho - p.rho) / (F_pi*F_pi) * Math.pow(crel, 1.5);
 
   const N = DATA.N_bins;
   const {del_grid, dot_grid} = DATA;
@@ -559,7 +560,7 @@ function updatePlots() {
   const csig = Math.pow(10, p.lcsig).toFixed(2);
   const muLabel = p.mu < 0.01 ? '0' : p.mu.toFixed(2);
   const title1 = `μ=${muLabel}, c<sub>π</sub>=${cpi}, c<sub>σ</sub>=${csig}`;
-  const title2 = `ρ=${p.rho.toFixed(1)}, ρ̃=${p.rhot.toFixed(1)}, c̃₃=${p.c3.toFixed(0)}`;
+  const title2 = `ρ=${p.rho.toFixed(1)}, Δρ=${p.drho.toFixed(1)}, c̃₃=${p.c3.toFixed(0)}`;
 
   // ── 1D Plot traces ──
   const traces1d = [];

@@ -13,7 +13,7 @@ Interactive explorer for weakly-mixed massive scalar exchange bispectrum shapes 
 | μ | Mass of the exchanged scalar (in units of H) |
 | log₁₀ cσ | Scalar field sound speed |
 | ρ | π̇σ mixing coupling |
-| ρ̃ | π̇²σ interaction coupling |
+| Δρ | π̇²σ interaction coupling (κ₂ ∝ −(ρ−Δρ); Δρ=0 is boost-invariant) |
 
 ## Features
 
