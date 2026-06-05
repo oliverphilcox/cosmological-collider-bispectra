@@ -255,15 +255,15 @@ const FLOOR = 1e-30;
 // ═══════════════════════════════════════════════════
 const DEFAULTS = {mu:2.5, lcpi:-1.0, lcsig:0.0, c3:0.0, rho:1.0, drho:0.0};
 const SLIDER_DEFS = [
-  ['lcpi', 'log₁₀ c<sub>π</sub>',  -2.0,  0.0, 0.05, DEFAULTS.lcpi, 'Sound Speed', 'self'],
+  ['lcpi', 'log₁₀ c<sub>π</sub>',  -2.0,  0.0, 0.05, DEFAULTS.lcpi, 'Goldstone sound-speed', 'self'],
   ['c3',   '$\\tilde{c}_3(c_\\pi^{-2}-1)$', -1000, 1000, 0.5, DEFAULTS.c3,
-   'π̇³ self-interaction', 'self'],
+   '$\\dot{\\pi}^3$ self-interaction', 'self'],
   ['mu',   'μ',                      0.0,  6.0, 0.10, DEFAULTS.mu,  'Scalar Mass', 'mix'],
-  ['lcsig','log₁₀ c<sub>σ</sub>',  -2.0,  0.0, 0.05, DEFAULTS.lcsig,'Sound Speed', 'mix'],
+  ['lcsig','log₁₀ c<sub>σ</sub>',  -2.0,  0.0, 0.05, DEFAULTS.lcsig,'Scalar sound-speed', 'mix'],
   ['rho',  'ρ',                    -10.0, 10.0, 0.05, DEFAULTS.rho,
-   'π̇σ Mixing', 'mix'],
+   '$\\dot{\\pi}\\sigma$ mixing', 'mix'],
   ['drho', 'Δρ',                  -250.0, 250.0, 0.5, DEFAULTS.drho,
-   'π̇²σ weak mixing', 'mix'],
+   '$\\dot{\\pi}^2\\sigma$ weak mixing', 'mix'],
 ];
 
 // ═══════════════════════════════════════════════════
@@ -562,7 +562,7 @@ function updatePlots() {
   const csig = Math.pow(10, p.lcsig).toFixed(2);
   const muLabel = p.mu < 0.01 ? '0' : p.mu.toFixed(2);
   const title1 = `μ=${muLabel}, c<sub>π</sub>=${cpi}, c<sub>σ</sub>=${csig}`;
-  const title2 = `$\\rho=${p.rho.toFixed(1)},\\ \\Delta\\rho=${p.drho.toFixed(1)},\\ \\tilde{c}_3=${p.c3.toFixed(0)}$`;
+  const title2 = `ρ=${p.rho.toFixed(1)}, Δρ=${p.drho.toFixed(1)}, c̃₃=${p.c3.toFixed(0)}`;
 
   // ── 1D Plot traces ──
   const traces1d = [];

@@ -69,12 +69,8 @@
   <div class="lag-body">
     <p>$$\frac{\mathcal{L}}{a^3} = \tfrac{1}{2}\!\left[\dot{\pi}_c^2 - c_{\rm rel}^2\tfrac{(\partial_i\pi_c)^2}{a^2}\right] + \tfrac{1}{2}\!\left[\dot{\sigma}_c^2 - \tfrac{(\partial_i\sigma_c)^2}{a^2} - m^2\sigma_c^2\right] + \color{#ff7f0e}{\rho\,\dot{\pi}_c\,\sigma_c}$$</p>
     <p>$$\color{#1f77b4}{-\,\lambda(\partial_\mu\pi_c)^2\dot{\pi}_c - \Delta\lambda\,\dot{\pi}_c^3}\;\;\color{#ff7f0e}{-\,\tfrac{\kappa}{2}(\partial_\mu\pi_c)^2\sigma_c - \tfrac{\Delta\kappa}{2}\dot{\pi}_c^2\sigma_c - \tfrac{\alpha}{2}\dot{\pi}_c\sigma_c^2 - \mu_\sigma\sigma_c^3 - \beta\tfrac{\partial_i\pi_c\partial_i\sigma_c}{a^2}\dot{\sigma}_c}$$</p>
-    <p style="font-size:0.85rem;">Unlike the weak-mixing site, the mixing $\rho$ is <b>not</b> perturbative: shapes are tabulated on a 3D
-      $(\log_{10}\rho,\,\mu,\,\log_{10}c_{\rm rel})$ grid and the $\sigma$ propagator is fully dressed. The four
-      operator couplings $\Delta\rho^2,\,\tilde{c}_3,\,\rho^2\alpha,\,\rho^3\mu_\sigma$ enter linearly and are shown
-      <b>in units of their natural (perturbativity) bound</b>, so $\pm1$ is an O(1) physical coupling.</p>
-    <p style="font-size:0.85rem; color:#666;">Each $\sigma$ field in a vertex needs one $\rho$-mixing insertion, so vertices with
-      1, 2, 3 $\sigma$ legs give <b>single</b>, <b>double</b>, <b>triple</b> exchange — shown separately in the 1D plot.</p>
+    <p style="font-size:0.85rem;">with $c_{\rm rel}=c_\pi/c_\sigma$, $\;m=c_\sigma m_\sigma$, $\;\mu=\sqrt{m^2/H^2-9/4}$, and mixing strength $\rho$ (non-perturbative). The cubic couplings $\Delta\rho,\,\tilde{c}_3,\,\alpha,\,\mu_\sigma$ are set directly by the sliders.</p>
+    <p style="font-size:0.85rem; color:#666;">Each $\sigma$ leg requires one $\rho$-insertion, so vertices with 1, 2, 3 $\sigma$ fields give <b>single</b>, <b>double</b>, <b>triple</b> exchange (plotted separately).</p>
   </div>
 </details>
 
@@ -95,9 +91,9 @@
       <label><input type="checkbox" id="divX" checked> Divide by x</label>
       <button id="resetBtn">Reset</button>
     </div>
-    <div class="group-title">Background parameters</div>
+    <div class="group-title">Quadratic theory</div>
     <div id="bg-sliders"></div>
-    <div class="group-title">Operator couplings (value = coupling; slider spans ±perturbativity bound)</div>
+    <div class="group-title">Cubic theory</div>
     <div id="op-sliders"></div>
   </div>
 </div>
@@ -108,29 +104,23 @@
 "use strict";
 
 // ═══════════════ Slider definitions ═══════════════
-const DEFAULTS = {mu:2.5, lcpi:-1.0, lcsig:0.0, lrho:0.0, dr2n:0.0, c3n:0.0, r2an:0.0, r3mn:0.0};
+// Operator sliders are the physical couplings directly (no normalization):
+//   dr  = Delta-rho      -> Deltarho2 = rho * dr
+//   c3  = c3~(c_pi^-2-1) -> used directly
+//   al  = alpha          -> rho2alpha = rho^2 * al
+//   mus = mu_sigma       -> rho3mu    = rho^3 * mus
+const DEFAULTS = {mu:2.5, lcpi:-1.0, lcsig:0.0, lrho:0.0, dr:0.0, c3:0.0, al:0.0, mus:0.0};
 const SLIDER_DEFS = [
-  ['mu',   'μ',                    0.0,  5.0, 0.10, DEFAULTS.mu,   'Scalar mass',  'bg'],
-  ['lcpi', 'log₁₀ c<sub>π</sub>', -2.0,  0.0, 0.05, DEFAULTS.lcpi, 'Inflaton sound speed', 'bg'],
-  ['lcsig','log₁₀ c<sub>σ</sub>', -1.0,  0.0, 0.05, DEFAULTS.lcsig,'Scalar sound speed',   'bg'],
-  ['lrho', 'log₁₀ ρ',            -4.0,  3.0, 0.05, DEFAULTS.lrho, 'Mixing strength','bg'],
-  ['dr2n', 'Δρ²',                -1.0,  1.0, 0.02, DEFAULTS.dr2n, 'π̇²σ exchange', 'op'],
-  ['c3n',  '$\\tilde{c}_3$',      -1.0,  1.0, 0.02, DEFAULTS.c3n,  'π̇³ self-int.', 'op'],
-  ['r2an', 'ρ²α',                -1.0,  1.0, 0.02, DEFAULTS.r2an, 'π̇σ² exchange', 'op'],
-  ['r3mn', 'ρ³μ<sub>σ</sub>',    -1.0,  1.0, 0.02, DEFAULTS.r3mn, 'σ³ exchange',  'op'],
+  ['mu',   'μ',                    0.0,    5.0,  0.10, DEFAULTS.mu,   'Scalar mass',          'bg'],
+  ['lcpi', 'log₁₀ c<sub>π</sub>', -2.0,    0.0,  0.05, DEFAULTS.lcpi, 'Goldstone sound-speed','bg'],
+  ['lcsig','log₁₀ c<sub>σ</sub>', -1.0,    0.0,  0.05, DEFAULTS.lcsig,'Scalar sound-speed',   'bg'],
+  ['lrho', 'log₁₀ ρ',            -4.0,    3.0,  0.05, DEFAULTS.lrho, 'Mixing strength',      'bg'],
+  ['dr',  'Δρ',                          -5000., 5000., 50.,  DEFAULTS.dr,  '$\\dot{\\pi}^2\\sigma$ exchange', 'op'],
+  ['c3',  '$\\tilde{c}_3(c_\\pi^{-2}{-}1)$', -1e4, 1e4, 100., DEFAULTS.c3, '$\\dot{\\pi}^3$ self-interaction', 'op'],
+  ['al',  'α',                           -3.0,   3.0,  0.05, DEFAULTS.al,  '$\\dot{\\pi}\\sigma^2$ exchange', 'op'],
+  ['mus', '$\\mu_\\sigma$',              -3.0,   3.0,  0.05, DEFAULTS.mus, '$\\sigma^3$ exchange',           'op'],
 ];
-// operator slider key -> get_bounds variable; slider value is a fraction of the perturbativity bound
-const OP_BOUND = {dr2n:'Deltarho2', c3n:'c3var', r2an:'rho2alpha', r3mn:'rho3mu'};
 const XMIN = 0.01;   // drop x < XMIN (noisy low-x region)
-
-// number formatting for the physical (un-normalized) couplings
-function fmtSci(v){ if(!isFinite(v)) return '—'; if(v===0) return '0';
-  const a=Math.abs(v); if(a>=1e-2 && a<1e4) return (Math.round(v*100)/100).toString();
-  return v.toExponential(1); }
-function texNum(v){ if(!isFinite(v)) return '-'; if(v===0) return '0';
-  const e=Math.floor(Math.log10(Math.abs(v))); const m=v/Math.pow(10,e);
-  if(e>=-2 && e<3) return (Math.round(v*100)/100).toString();
-  return `${Math.round(m*10)/10}\\times10^{${e}}`; }
 function typesetMath(){ if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise();
   else setTimeout(typesetMath,200); }
 
@@ -170,7 +160,8 @@ function buildSliders(){
 }
 function fmtVal(key,v){
   if(key==='mu'||key==='lcpi'||key==='lcsig'||key==='lrho') return v.toFixed(2);
-  return v.toFixed(1);
+  if(key==='dr'||key==='c3') return v.toFixed(0);
+  return v.toFixed(2);
 }
 function getParams(){ const p={}; for(const k of Object.keys(DEFAULTS)) p[k]=parseFloat(sliderEls[k].value); return p; }
 function resetSliders(){ for(const k of Object.keys(DEFAULTS)){ sliderEls[k].value=DEFAULTS[k]; valEls[k].textContent=fmtVal(k,DEFAULTS[k]); } requestUpdate(); }
@@ -268,15 +259,6 @@ function interp3Scalar(arr,lr,mu,lc){
   return s;
 }
 
-// ═══════════════ natural-bound model (notebook get_bounds, type='general') ═══════════════
-function getBounds(v,rho,cpi,csigma){
-  const Dz=Math.sqrt(2.1e-9), crel=cpi/csigma, gf=Math.min(1,1/crel);
-  if(v==='c3var')    return Math.pow(2*Math.PI*Dz*Dz,-0.5);
-  if(v==='Deltarho2')return Math.max(gf*Math.pow(crel,-0.5)/(2*Math.PI*Dz), Math.pow(crel,-0.25)*Math.pow(rho,0.75)/(2*Math.PI*Dz))*rho;
-  if(v==='rho2alpha')return Math.max(gf*Math.pow(crel,0.5), Math.pow(crel,0.25)*Math.pow(rho,0.75))*rho*rho;
-  if(v==='rho3mu')   return Math.max(gf, Math.pow(crel,-0.75)*Math.pow(rho,0.75))*rho*rho*rho;
-}
-
 // ═══════════════ compute shape — replicates signal() (scale_rho=False, rho_fid=rho) ═══════════════
 function computeShape(p){
   const cpi=Math.pow(10,p.lcpi), csigma=Math.pow(10,p.lcsig), crel=cpi/csigma;
@@ -300,10 +282,11 @@ function computeShape(p){
   const rk1 = rho*rho/F2/(csigma*csigma)*Math.pow(crel,1.5);
   const rk2 =-rho*rho/F2*Math.pow(crel,1.5);
   const beta=(1/(csigma*csigma)-1)/F2*Math.pow(crel,1.5);
-  const Deltarho2=p.dr2n*getBounds('Deltarho2',rho,cpi,csigma);
-  const c3var   =p.c3n *getBounds('c3var',    rho,cpi,csigma);
-  const rho2alpha=p.r2an*getBounds('rho2alpha',rho,cpi,csigma);
-  const rho3mu   =p.r3mn*getBounds('rho3mu',   rho,cpi,csigma);
+  // operator couplings entered directly (rho powers restore the linear params)
+  const Deltarho2 = rho*p.dr;            // Deltarho2 = rho * Delta-rho
+  const c3var     = p.c3;                // c3~(c_pi^-2-1) used directly
+  const rho2alpha = rho*rho*p.al;        // rho^2 * alpha
+  const rho3mu    = rho*rho*rho*p.mus;   // rho^3 * mu_sigma
   const c3coef=-0.5/F2*Math.pow(crel,1.5)*2/3;        // multiplies dot3pi
   const dr2coef=1/F2*Math.pow(crel,1.5)/rho;          // multiplies dot2pi_sigma
 
@@ -331,19 +314,15 @@ function updatePlots(){
   const S=computeShape(p);
   const {xs,x_1d,mask_1d,N_bins,N_1d,nx,ny,binIx,binIy,xEdges,yEdges}=DATA;
 
-  // physical (un-normalized) couplings = slider fraction * perturbativity bound, shown live
-  const rhoV=Math.pow(10,p.lrho), cpiV=Math.pow(10,p.lcpi), csigV=Math.pow(10,p.lcsig);
-  const act={}; for(const k in OP_BOUND){ act[k]=p[k]*getBounds(OP_BOUND[k],rhoV,cpiV,csigV);
-    if(valEls[k]) valEls[k].textContent=fmtSci(act[k]); }
-
   // 1D x-grid, dropping the noisy x < XMIN region
+  const cpiV=Math.pow(10,p.lcpi), csigV=Math.pow(10,p.lcsig), rhoV=Math.pow(10,p.lrho);
   const xf=[]; for(let k=0;k<N_1d;k++) if(x_1d[k]>=XMIN) xf.push(x_1d[k]);
   const slice1d=(sarr)=>{ const out=[]; let j=0;
     for(let i=0;i<N_bins;i++){ if(mask_1d[i]>0.5){ if(x_1d[j]>=XMIN) out.push(sarr[i]/(divideByX?x_1d[j]:1.0)); j++; } } return out; };
 
   const cpi=cpiV.toFixed(2), csig=csigV.toFixed(2);
   const title1=`μ=${p.mu.toFixed(2)}, c<sub>π</sub>=${cpi}, c<sub>σ</sub>=${csig}, ρ=${rhoV.toPrecision(2)}`;
-  const title2=`$\\Delta\\rho^2=${texNum(act.dr2n)},\\ \\tilde{c}_3=${texNum(act.c3n)},\\ \\rho^2\\alpha=${texNum(act.r2an)},\\ \\rho^3\\mu_\\sigma=${texNum(act.r3mn)}$`;
+  const title2=`Δρ=${p.dr.toFixed(0)}, α=${p.al.toFixed(2)}, μ<sub>σ</sub>=${p.mus.toFixed(2)}`;
 
   const traces1d=[]; const comps=[
     {arr:slice1d(S.s_self),  name:'Self-interaction', color:'#1f77b4'},
