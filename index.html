@@ -142,8 +142,8 @@ const CFG = {
       ['c3','$\\tilde{c}_3$',        -10., 10., 0.1,  0.0, '$\\dot{\\pi}^3$ self-interaction','self'],
       ['m','m/H',                     1.5, 6.0, 0.05, 2.92,'Scalar mass','mix'],
       ['lcsig','log₁₀ c<sub>σ</sub>',-2.0, 0.0, 0.05, 0.0, 'Scalar sound-speed','mix'],
-      ['rho','ρ',                   -10.,10., 0.05, 1.0, '$\\dot{\\pi}\\sigma$ mixing','mix'],
-      ['drho','Δρ',                -250.,250.,0.5,  0.0, '$\\dot{\\pi}^2\\sigma$ weak mixing','mix'],
+      ['rho','ρ/H',                 -10.,10., 0.05, 1.0, '$\\dot{\\pi}\\sigma$ mixing','mix'],
+      ['drho','Δρ/H',              -250.,250.,0.5,  0.0, '$\\dot{\\pi}^2\\sigma$ weak mixing','mix'],
     ],
     fmt:(k,v)=>{ if(k==='m'||k==='lcpi'||k==='lcsig'||k==='rho') return v.toFixed(2);
                  if(k==='drho'||k==='c3') return v.toFixed(1); return v.toFixed(0); },
@@ -158,11 +158,11 @@ const CFG = {
       ['m','m/H',                   1.5, 5.0, 0.05, 3.0, 'Scalar mass','bg'],
       ['lcpi','log₁₀ c<sub>π</sub>',-2.0,0.0, 0.05,-1.0, 'Goldstone sound-speed','bg'],
       ['lcsig','log₁₀ c<sub>σ</sub>',-1.0,0.0,0.05, 0.0, 'Scalar sound-speed','bg'],
-      ['lrho','log₁₀ ρ',           -4.0,3.0, 0.05, 0.0, 'Mixing strength','bg'],
-      ['dr','Δρ',               -5000.,5000.,50., 0.0, '$\\dot{\\pi}^2\\sigma$ exchange','op'],
+      ['lrho','log₁₀ ρ/H',         -4.0,3.0, 0.05, 0.0, 'Mixing strength','bg'],
+      ['dr','Δρ/H',             -5000.,5000.,50., 0.0, '$\\dot{\\pi}^2\\sigma$ exchange','op'],
       ['c3','$\\tilde{c}_3$',      -10.,10., 0.1, 0.0, '$\\dot{\\pi}^3$ self-interaction','op'],
       ['al','α',                   -1.0,1.0, 0.02,0.0, '$\\dot{\\pi}\\sigma^2$ exchange','op'],
-      ['mus','$\\mu$',             -1.0,1.0, 0.02,0.0, '$\\sigma^3$ exchange','op'],
+      ['mus','$\\mu/H$',           -1.0,1.0, 0.02,0.0, '$\\sigma^3$ exchange','op'],
     ],
     fmt:(k,v)=>{ if(k==='m'||k==='lcpi'||k==='lcsig'||k==='lrho') return v.toFixed(2);
                  if(k==='dr') return v.toFixed(0); if(k==='c3') return v.toFixed(1); return v.toFixed(2); },
@@ -251,7 +251,7 @@ function computeWeak(p){
                           {name:'Mixing / exchange',color:'#ff7f0e',s:s_exch},
                           {name:'Total',color:'#000000',s:s_tot} ],
     title1:`m/H=${p.m.toFixed(2)}, c<sub>π</sub>=${cpi.toFixed(2)}, c<sub>σ</sub>=${csigma.toFixed(2)}`,
-    title2:`ρ=${p.rho.toFixed(1)}, Δρ=${p.drho.toFixed(1)}, c̃₃=${p.c3.toFixed(1)}` };
+    title2:`ρ/H=${p.rho.toFixed(1)}, Δρ/H=${p.drho.toFixed(1)}, c̃₃=${p.c3.toFixed(1)}` };
 }
 
 // ═══════════════ general: factors + trilinear + model ═══════════════
@@ -319,8 +319,8 @@ function computeGeneral(p){
                           {name:'Double exchange',color:'#2ca02c',s:s_double},
                           {name:'Triple exchange',color:'#d62728',s:s_triple},
                           {name:'Total',color:'#000000',s:s_tot} ],
-    title1:`m/H=${p.m.toFixed(2)}, c<sub>π</sub>=${cpi.toFixed(2)}, c<sub>σ</sub>=${csigma.toFixed(2)}, ρ=${rho.toPrecision(2)}`,
-    title2:`Δρ=${p.dr.toFixed(0)}, α=${p.al.toFixed(2)}, μ=${p.mus.toFixed(2)}` };
+    title1:`m/H=${p.m.toFixed(2)}, c<sub>π</sub>=${cpi.toFixed(2)}, c<sub>σ</sub>=${csigma.toFixed(2)}, ρ/H=${rho.toPrecision(2)}`,
+    title2:`Δρ/H=${p.dr.toFixed(0)}, α=${p.al.toFixed(2)}, μ/H=${p.mus.toFixed(2)}` };
 }
 
 // ═══════════════ slider UI ═══════════════
