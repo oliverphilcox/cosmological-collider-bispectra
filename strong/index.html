@@ -72,9 +72,8 @@
       $(\log_{10}\rho,\,\mu,\,\log_{10}c_{\rm rel})$ grid and the $\sigma$ propagator is fully dressed. The four
       operator couplings $\Delta\rho^2,\,\tilde{c}_3,\,\rho^2\alpha,\,\rho^3\mu_\sigma$ enter linearly and are shown
       <b>in units of their natural (perturbativity) bound</b>, so $\pm1$ is an O(1) physical coupling.</p>
-    <p style="font-size:0.85rem; color:#666;">
-      <span class="term-self">Blue: self-interactions ($\dot\pi$ only)</span> &nbsp;|&nbsp;
-      <span class="term-mix">Orange: mixing / exchange ($\sigma$)</span></p>
+    <p style="font-size:0.85rem; color:#666;">Each $\sigma$ field in a vertex needs one $\rho$-mixing insertion, so vertices with
+      1, 2, 3 $\sigma$ legs give <b>single</b>, <b>double</b>, <b>triple</b> exchange — shown separately in the 1D plot.</p>
   </div>
 </details>
 
@@ -110,7 +109,7 @@
 // ═══════════════ Slider definitions ═══════════════
 const DEFAULTS = {mu:2.5, lcpi:-1.0, lcsig:0.0, lrho:0.0, dr2n:0.0, c3n:0.0, r2an:0.0, r3mn:0.0};
 const SLIDER_DEFS = [
-  ['mu',   'μ',                   -1.49, 5.0, 0.10, DEFAULTS.mu,   'Scalar mass',  'bg'],
+  ['mu',   'μ',                    0.0,  5.0, 0.10, DEFAULTS.mu,   'Scalar mass',  'bg'],
   ['lcpi', 'log₁₀ c<sub>π</sub>', -2.0,  0.0, 0.05, DEFAULTS.lcpi, 'Sound speed',  'bg'],
   ['lcsig','log₁₀ c<sub>σ</sub>', -1.0,  0.0, 0.05, DEFAULTS.lcsig,'Sound speed',  'bg'],
   ['lrho', 'log₁₀ ρ',            -4.0,  3.0, 0.05, DEFAULTS.lrho, 'Mixing strength','bg'],
@@ -294,40 +293,42 @@ function computeShape(p){
   const dr2coef=1/F2*Math.pow(crel,1.5)/rho;          // multiplies dot2pi_sigma
 
   const N=DATA.N_bins;
-  const s_self=new Float64Array(N), s_exch=new Float64Array(N), s_tot=new Float64Array(N);
+  // decompose by exchange order = number of sigma fields = number of rho-mixing insertions
+  const s_self=new Float64Array(N), s_single=new Float64Array(N),
+        s_double=new Float64Array(N), s_triple=new Float64Array(N), s_tot=new Float64Array(N);
   for(let i=0;i<N;i++){
-    s_self[i]= lam1*S['del2pi_dotpi'][i] + (lam2 + c3var*c3coef)*S['dot3pi'][i];
-    s_exch[i]= rk1*S['del2pi_sigma'][i]/rho
-             + rk2*S['dot2pi_sigma'][i]/rho
-             + Deltarho2*dr2coef*S['dot2pi_sigma'][i]
-             + beta*S['delpi_delsigma_dotsigma'][i]
-             + rho2alpha*S['dotpi_sigma2'][i]/(rho*rho)
-             + rho3mu*S['sigma3'][i]/(rho*rho*rho);
-    s_tot[i]=s_self[i]+s_exch[i];
+    s_self[i]   = lam1*S['del2pi_dotpi'][i] + (lam2 + c3var*c3coef)*S['dot3pi'][i];          // 0 sigma
+    s_single[i] = rk1*S['del2pi_sigma'][i]/rho                                                // 1 sigma
+                + rk2*S['dot2pi_sigma'][i]/rho
+                + Deltarho2*dr2coef*S['dot2pi_sigma'][i];
+    s_double[i] = beta*S['delpi_delsigma_dotsigma'][i]                                        // 2 sigma
+                + rho2alpha*S['dotpi_sigma2'][i]/(rho*rho);
+    s_triple[i] = rho3mu*S['sigma3'][i]/(rho*rho*rho);                                        // 3 sigma
+    s_tot[i]    = s_self[i]+s_single[i]+s_double[i]+s_triple[i];
   }
-  return {s_self,s_exch,s_tot,Fpi};
+  return {s_self,s_single,s_double,s_triple,s_tot,Fpi};
 }
 
 // ═══════════════ Plotting (identical structure to weak site) ═══════════════
 let plotsInitialized=false;
 function updatePlots(){
   const p=getParams();
-  const {s_self,s_exch,s_tot}=computeShape(p);
+  const S=computeShape(p);
   const {x_1d,mask_1d,N_bins,N_1d,nx,ny,binIx,binIy,xEdges,yEdges}=DATA;
 
-  const self1d=new Float64Array(N_1d),exch1d=new Float64Array(N_1d),tot1d=new Float64Array(N_1d);
-  let j=0;
-  for(let i=0;i<N_bins;i++){ if(mask_1d[i]>0.5){ const dn=divideByX?x_1d[j]:1.0;
-    self1d[j]=s_self[i]/dn; exch1d[j]=s_exch[i]/dn; tot1d[j]=s_tot[i]/dn; j++; } }
+  const slice1d=(sarr)=>{ const out=new Float64Array(N_1d); let j=0;
+    for(let i=0;i<N_bins;i++){ if(mask_1d[i]>0.5){ out[j]=sarr[i]/(divideByX?x_1d[j]:1.0); j++; } } return out; };
 
   const cpi=Math.pow(10,p.lcpi).toFixed(2), csig=Math.pow(10,p.lcsig).toFixed(2);
   const title1=`μ=${p.mu.toFixed(2)}, c<sub>π</sub>=${cpi}, c<sub>σ</sub>=${csig}, ρ=${Math.pow(10,p.lrho).toPrecision(2)}`;
   const title2=`Δρ²=${p.dr2n.toFixed(1)}, c̃₃=${p.c3n.toFixed(1)}, ρ²α=${p.r2an.toFixed(1)}, ρ³μ=${p.r3mn.toFixed(1)} (norm.)`;
 
   const traces1d=[]; const comps=[
-    {arr:self1d,name:'Self-interaction',color:'#1f77b4'},
-    {arr:exch1d,name:'Mixing / exchange',color:'#ff7f0e'},
-    {arr:tot1d, name:'Total',color:'#000000'} ];
+    {arr:slice1d(S.s_self),  name:'Self-interaction', color:'#1f77b4'},
+    {arr:slice1d(S.s_single),name:'Single exchange',  color:'#ff7f0e'},
+    {arr:slice1d(S.s_double),name:'Double exchange',  color:'#2ca02c'},
+    {arr:slice1d(S.s_triple),name:'Triple exchange',  color:'#d62728'},
+    {arr:slice1d(S.s_tot),   name:'Total',            color:'#000000'} ];
   if(useLogY){
     for(const {arr,name,color} of comps){ const xv=[],py=[],ny2=[];
       for(let i=0;i<N_1d;i++){ xv.push(x_1d[i]); py.push(arr[i]>FLOOR?arr[i]:null); ny2.push(-arr[i]>FLOOR?-arr[i]:null); }
@@ -345,9 +346,9 @@ function updatePlots(){
     margin:{l:65,r:15,t:45,b:55},
     shapes:useLogY?[]:[{type:'line',x0:1e-3,x1:1,y0:0,y1:0,xref:'x',yref:'y',line:{color:'#888',width:1,dash:'dash'}}] };
 
-  const vm=Math.max(...Array.from(s_tot).map(Math.abs));
+  const vm=Math.max(...Array.from(S.s_tot).map(Math.abs));
   const z=[]; for(let iy=0;iy<ny;iy++) z.push(new Array(nx).fill(null));
-  for(let i=0;i<N_bins;i++) z[binIy[i]][binIx[i]]=s_tot[i];
+  for(let i=0;i<N_bins;i++) z[binIy[i]][binIx[i]]=S.s_tot[i];
   const traceHeatmap={ type:'heatmap',x:xEdges,y:yEdges,z, colorscale:'RdBu',reversescale:false,
     zmin:-vm,zmax:vm,connectgaps:false,hoverongaps:false,
     colorbar:{title:{text:'S(x,y)',font:{size:13}},len:0.85,thickness:18,exponentformat:'e'},
