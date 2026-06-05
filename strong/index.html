@@ -110,8 +110,8 @@
 const DEFAULTS = {mu:2.5, lcpi:-1.0, lcsig:0.0, lrho:0.0, dr2n:0.0, c3n:0.0, r2an:0.0, r3mn:0.0};
 const SLIDER_DEFS = [
   ['mu',   'μ',                    0.0,  5.0, 0.10, DEFAULTS.mu,   'Scalar mass',  'bg'],
-  ['lcpi', 'log₁₀ c<sub>π</sub>', -2.0,  0.0, 0.05, DEFAULTS.lcpi, 'Sound speed',  'bg'],
-  ['lcsig','log₁₀ c<sub>σ</sub>', -1.0,  0.0, 0.05, DEFAULTS.lcsig,'Sound speed',  'bg'],
+  ['lcpi', 'log₁₀ c<sub>π</sub>', -2.0,  0.0, 0.05, DEFAULTS.lcpi, 'Inflaton sound speed', 'bg'],
+  ['lcsig','log₁₀ c<sub>σ</sub>', -1.0,  0.0, 0.05, DEFAULTS.lcsig,'Scalar sound speed',   'bg'],
   ['lrho', 'log₁₀ ρ',            -4.0,  3.0, 0.05, DEFAULTS.lrho, 'Mixing strength','bg'],
   ['dr2n', 'Δρ²',                -3.0,  3.0, 0.1,  DEFAULTS.dr2n, 'π̇²σ exchange', 'op'],
   ['c3n',  'c̃₃',                 -3.0,  3.0, 0.1,  DEFAULTS.c3n,  'π̇³ self-int.', 'op'],
