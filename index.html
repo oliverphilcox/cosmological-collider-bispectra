@@ -160,10 +160,10 @@ const CFG = {
       ['lcpi','log₁₀ c<sub>π</sub>',-2.0,0.0, 0.05,-1.0, 'Goldstone sound-speed','bg'],
       ['lcsig','log₁₀ c<sub>σ</sub>',-1.0,0.0,0.05, 0.0, 'Scalar sound-speed','bg'],
       ['lrho','log₁₀ ρ/H',         -4.0,3.0, 0.05, 0.0, 'Mixing strength','bg'],
-      ['dr','Δρ/H',             -5000.,5000.,50., 0.0, '$\\dot{\\pi}^2\\sigma$ exchange','op'],
+      ['dr','Δρ/H',             -1e4,1e4, 100., 0.0, '$\\dot{\\pi}^2\\sigma$ exchange','op'],
       ['c3','$\\tilde{c}_3$',      -10.,10., 0.1, 0.0, '$\\dot{\\pi}^3$ self-interaction','op'],
-      ['al','α',                   -5.0,5.0, 0.05,0.0, '$\\dot{\\pi}\\sigma^2$ exchange','op'],
-      ['mus','$\\mu/H$',           -5.0,5.0, 0.05,0.0, '$\\sigma^3$ exchange','op'],
+      ['al','α',                   -10.,10., 0.1, 0.0, '$\\dot{\\pi}\\sigma^2$ exchange','op'],
+      ['mus','$\\mu/H$',           -10.,10., 0.1, 0.0, '$\\sigma^3$ exchange','op'],
     ],
     fmt:(k,v)=>{ if(k==='m'||k==='lcpi'||k==='lcsig'||k==='lrho') return v.toFixed(2);
                  if(k==='dr') return v.toFixed(0); if(k==='c3') return v.toFixed(1); return v.toFixed(2); },
