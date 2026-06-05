@@ -68,9 +68,9 @@
   <summary>Show Lagrangian</summary>
   <div class="lag-body">
     <p>$$\frac{\mathcal{L}}{a^3} = \tfrac{1}{2}\!\left[\dot{\pi}_c^2 - c_{\rm rel}^2\tfrac{(\partial_i\pi_c)^2}{a^2}\right] + \tfrac{1}{2}\!\left[\dot{\sigma}_c^2 - \tfrac{(\partial_i\sigma_c)^2}{a^2} - m^2\sigma_c^2\right] + \color{#ff7f0e}{\rho\,\dot{\pi}_c\,\sigma_c}$$</p>
-    <p>$$\color{#1f77b4}{-\,\lambda(\partial_\mu\pi_c)^2\dot{\pi}_c - \Delta\lambda\,\dot{\pi}_c^3}\;\;\color{#ff7f0e}{-\,\tfrac{\kappa}{2}(\partial_\mu\pi_c)^2\sigma_c - \tfrac{\Delta\kappa}{2}\dot{\pi}_c^2\sigma_c - \tfrac{\alpha}{2}\dot{\pi}_c\sigma_c^2 - \mu_\sigma\sigma_c^3 - \beta\tfrac{\partial_i\pi_c\partial_i\sigma_c}{a^2}\dot{\sigma}_c}$$</p>
-    <p style="font-size:0.85rem;">with $c_{\rm rel}=c_\pi/c_\sigma$, $\;m=c_\sigma m_\sigma$, $\;\mu=\sqrt{m^2/H^2-9/4}$, and mixing strength $\rho$ (non-perturbative). The cubic couplings $\Delta\rho,\,\tilde{c}_3,\,\alpha,\,\mu_\sigma$ are set directly by the sliders.</p>
-    <p style="font-size:0.85rem; color:#666;">Each $\sigma$ leg requires one $\rho$-insertion, so vertices with 1, 2, 3 $\sigma$ fields give <b>single</b>, <b>double</b>, <b>triple</b> exchange (plotted separately).</p>
+    <p>$$\color{#1f77b4}{-\,\lambda(\partial_\mu\pi_c)^2\dot{\pi}_c - \Delta\lambda\,\dot{\pi}_c^3}\;\;\color{#ff7f0e}{-\,\tfrac{\kappa}{2}(\partial_\mu\pi_c)^2\sigma_c - \tfrac{\Delta\kappa}{2}\dot{\pi}_c^2\sigma_c - \tfrac{\alpha}{2}\dot{\pi}_c\sigma_c^2 - \mu\,\sigma_c^3 - \beta\tfrac{\partial_i\pi_c\partial_i\sigma_c}{a^2}\dot{\sigma}_c}$$</p>
+    <p style="font-size:0.85rem;">with $c_{\rm rel}=c_\pi/c_\sigma$, mass $m$ (mass parameter $\nu=\sqrt{m^2/H^2-9/4}$ sets the grid), and mixing strength $\rho$ (non-perturbative). The cubic couplings $\Delta\rho,\,\tilde{c}_3,\,\alpha,\,\mu$ are set directly by the sliders.</p>
+    <p style="font-size:0.85rem; color:#666;">Each $\sigma$ leg requires one $\rho$-insertion, so vertices with 1, 2, 3 $\sigma$ fields give <b>single</b>, <b>double</b>, <b>triple</b> exchange (plotted separately). Shapes are interpolated from a finite grid and carry some residual numerical noise.</p>
   </div>
 </details>
 
@@ -109,16 +109,16 @@
 //   c3  = c3~(c_pi^-2-1) -> used directly
 //   al  = alpha          -> rho2alpha = rho^2 * al
 //   mus = mu_sigma       -> rho3mu    = rho^3 * mus
-const DEFAULTS = {mu:2.5, lcpi:-1.0, lcsig:0.0, lrho:0.0, dr:0.0, c3:0.0, al:0.0, mus:0.0};
+const DEFAULTS = {m:3.0, lcpi:-1.0, lcsig:0.0, lrho:0.0, dr:0.0, c3:0.0, al:0.0, mus:0.0};
 const SLIDER_DEFS = [
-  ['mu',   'μ',                    0.0,    5.0,  0.10, DEFAULTS.mu,   'Scalar mass',          'bg'],
+  ['m',    'm/H',                  1.5,    5.0,  0.05, DEFAULTS.m,    'Scalar mass',          'bg'],
   ['lcpi', 'log₁₀ c<sub>π</sub>', -2.0,    0.0,  0.05, DEFAULTS.lcpi, 'Goldstone sound-speed','bg'],
   ['lcsig','log₁₀ c<sub>σ</sub>', -1.0,    0.0,  0.05, DEFAULTS.lcsig,'Scalar sound-speed',   'bg'],
   ['lrho', 'log₁₀ ρ',            -4.0,    3.0,  0.05, DEFAULTS.lrho, 'Mixing strength',      'bg'],
   ['dr',  'Δρ',                          -5000., 5000., 50.,  DEFAULTS.dr,  '$\\dot{\\pi}^2\\sigma$ exchange', 'op'],
-  ['c3',  '$\\tilde{c}_3(c_\\pi^{-2}{-}1)$', -1e4, 1e4, 100., DEFAULTS.c3, '$\\dot{\\pi}^3$ self-interaction', 'op'],
+  ['c3',  '$\\tilde{c}_3$',                  -10., 10., 0.1, DEFAULTS.c3, '$\\dot{\\pi}^3$ self-interaction', 'op'],
   ['al',  'α',                           -3.0,   3.0,  0.05, DEFAULTS.al,  '$\\dot{\\pi}\\sigma^2$ exchange', 'op'],
-  ['mus', '$\\mu_\\sigma$',              -3.0,   3.0,  0.05, DEFAULTS.mus, '$\\sigma^3$ exchange',           'op'],
+  ['mus', '$\\mu$',                      -3.0,   3.0,  0.05, DEFAULTS.mus, '$\\sigma^3$ exchange',           'op'],
 ];
 const XMIN = 0.01;   // drop x < XMIN (noisy low-x region)
 function typesetMath(){ if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise();
@@ -159,8 +159,8 @@ function buildSliders(){
   }
 }
 function fmtVal(key,v){
-  if(key==='mu'||key==='lcpi'||key==='lcsig'||key==='lrho') return v.toFixed(2);
-  if(key==='dr'||key==='c3') return v.toFixed(0);
+  if(key==='m'||key==='lcpi'||key==='lcsig'||key==='lrho') return v.toFixed(2);
+  if(key==='dr') return v.toFixed(0);
   return v.toFixed(2);
 }
 function getParams(){ const p={}; for(const k of Object.keys(DEFAULTS)) p[k]=parseFloat(sliderEls[k].value); return p; }
@@ -262,7 +262,7 @@ function interp3Scalar(arr,lr,mu,lc){
 // ═══════════════ compute shape — replicates signal() (scale_rho=False, rho_fid=rho) ═══════════════
 function computeShape(p){
   const cpi=Math.pow(10,p.lcpi), csigma=Math.pow(10,p.lcsig), crel=cpi/csigma;
-  const rho=Math.pow(10,p.lrho), mu=p.mu;
+  const rho=Math.pow(10,p.lrho), mu=Math.sqrt(Math.max(p.m*p.m-9./4.,1e-6));   // m/H -> mu
   const lr=Math.max(p.lrho,DATA.LOG10RHO_MIN), reff=Math.pow(10,lr), lc=Math.log10(crel);
 
   // factors at the (clamped) query point
@@ -284,9 +284,9 @@ function computeShape(p){
   const beta=(1/(csigma*csigma)-1)/F2*Math.pow(crel,1.5);
   // operator couplings entered directly (rho powers restore the linear params)
   const Deltarho2 = rho*p.dr;            // Deltarho2 = rho * Delta-rho
-  const c3var     = p.c3;                // c3~(c_pi^-2-1) used directly
+  const c3var     = p.c3*(1/(cpi*cpi)-1);// c3var = c3~ (c_pi^-2 - 1)
   const rho2alpha = rho*rho*p.al;        // rho^2 * alpha
-  const rho3mu    = rho*rho*rho*p.mus;   // rho^3 * mu_sigma
+  const rho3mu    = rho*rho*rho*p.mus;   // rho^3 * mu (sigma^3 coupling)
   const c3coef=-0.5/F2*Math.pow(crel,1.5)*2/3;        // multiplies dot3pi
   const dr2coef=1/F2*Math.pow(crel,1.5)/rho;          // multiplies dot2pi_sigma
 
@@ -321,8 +321,8 @@ function updatePlots(){
     for(let i=0;i<N_bins;i++){ if(mask_1d[i]>0.5){ if(x_1d[j]>=XMIN) out.push(sarr[i]/(divideByX?x_1d[j]:1.0)); j++; } } return out; };
 
   const cpi=cpiV.toFixed(2), csig=csigV.toFixed(2);
-  const title1=`μ=${p.mu.toFixed(2)}, c<sub>π</sub>=${cpi}, c<sub>σ</sub>=${csig}, ρ=${rhoV.toPrecision(2)}`;
-  const title2=`Δρ=${p.dr.toFixed(0)}, α=${p.al.toFixed(2)}, μ<sub>σ</sub>=${p.mus.toFixed(2)}`;
+  const title1=`m/H=${p.m.toFixed(2)}, c<sub>π</sub>=${cpi}, c<sub>σ</sub>=${csig}, ρ=${rhoV.toPrecision(2)}`;
+  const title2=`Δρ=${p.dr.toFixed(0)}, α=${p.al.toFixed(2)}, μ=${p.mus.toFixed(2)}`;
 
   const traces1d=[]; const comps=[
     {arr:slice1d(S.s_self),  name:'Self-interaction', color:'#1f77b4'},
