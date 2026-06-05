@@ -124,6 +124,34 @@ const XMIN = 0.01;   // drop x < XMIN (noisy low-x region)
 function typesetMath(){ if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise();
   else setTimeout(typesetMath,200); }
 
+// ── unitarity / perturbativity bounds (notebook get_bounds, type='general') ──
+const _Dz=Math.sqrt(2.1e-9), _kap=0.053;
+function getBounds(v,rho,cpi,csigma){
+  const crel=cpi/csigma, gf=Math.min(1,1/crel);
+  if(v==='Deltarho2')return Math.max(gf*Math.pow(crel,-0.5)/(2*Math.PI*_Dz), Math.pow(crel,-0.25)*Math.pow(rho,0.75)/(2*Math.PI*_Dz))*rho;
+  if(v==='rho2alpha')return Math.max(gf*Math.pow(crel,0.5),  Math.pow(crel,0.25)*Math.pow(rho,0.75))*rho*rho;
+  if(v==='rho3mu')   return Math.max(gf,                     Math.pow(crel,-0.75)*Math.pow(rho,0.75))*rho*rho*rho;
+  if(v==='rho')      return Math.max(gf*Math.pow(crel,-0.5), csigma*csigma*crel*Math.sqrt(_kap)/_Dz);
+}
+function niceRound(x){ if(!isFinite(x)||x<=0) return 1; const e=Math.floor(Math.log10(x)), f=x/Math.pow(10,e);
+  return (f<=1?1:f<=2?2:f<=5?5:10)*Math.pow(10,e); }
+// set operator-slider ranges to the unitarity bound on each physical coupling (rho powers stripped)
+function updateRanges(){
+  const cpi=Math.pow(10,parseFloat(sliderEls.lcpi.value)), csigma=Math.pow(10,parseFloat(sliderEls.lcsig.value));
+  const rho=Math.pow(10,parseFloat(sliderEls.lrho.value));
+  const fund={ dr:  getBounds('Deltarho2',rho,cpi,csigma)/rho,
+               al:  getBounds('rho2alpha',rho,cpi,csigma)/(rho*rho),
+               mus: getBounds('rho3mu',   rho,cpi,csigma)/(rho*rho*rho) };
+  for(const key in fund){ const b=niceRound(fund[key]), inp=sliderEls[key];
+    inp.min=-b; inp.max=b; inp.step=b/100;
+    let val=parseFloat(inp.value); val=Math.max(-b,Math.min(b,val));
+    inp.value=val; valEls[key].textContent=fmtVal(key,val); }
+  // rho axis upper limit (also grid-capped at 1000)
+  const lrhoMax=Math.min(3, Math.log10(getBounds('rho',rho,cpi,csigma)));
+  sliderEls.lrho.max=lrhoMax;
+  if(parseFloat(sliderEls.lrho.value)>lrhoMax){ sliderEls.lrho.value=lrhoMax; valEls.lrho.textContent=fmtVal('lrho',lrhoMax); }
+}
+
 const OPS = ['del2pi_dotpi','dot3pi','del2pi_sigma','dot2pi_sigma',
              'dotpi_sigma2','sigma3','delpi_delsigma_dotsigma'];
 const R = Math.pow(2.0, 1.0/8.0), sqR = Math.sqrt(R), FLOOR = 1e-30;
@@ -310,6 +338,7 @@ function computeShape(p){
 // ═══════════════ Plotting (identical structure to weak site) ═══════════════
 let plotsInitialized=false;
 function updatePlots(){
+  updateRanges();              // keep operator-slider ranges within unitarity bounds
   const p=getParams();
   const S=computeShape(p);
   const {xs,x_1d,mask_1d,N_bins,N_1d,nx,ny,binIx,binIy,xEdges,yEdges}=DATA;
