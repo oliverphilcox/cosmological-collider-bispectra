@@ -3,214 +3,81 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Massive Scalar Exchange (Weak Mixing) — Bispectrum Shape Explorer</title>
+<title>Massive Scalar Exchange — Bispectrum Shape Explorer</title>
 <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script>MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]}};</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    background: #f5f6fa;
-    color: #333;
-  }
-  h1 {
-    text-align: center;
-    padding: 18px 0 6px;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #222;
-  }
-  /* ── Plot tabs (mobile only) ── */
-  .plot-tabs {
-    display: none; /* hidden on desktop */
-    justify-content: center;
-    gap: 0;
-    margin: 0 20px 6px;
-  }
-  .plot-tabs button {
-    flex: 1;
-    max-width: 160px;
-    padding: 7px 0;
-    font-size: 0.9rem;
-    font-weight: 600;
-    border: 1px solid #bbb;
-    background: #e8e8e8;
-    color: #555;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .plot-tabs button:first-child { border-radius: 6px 0 0 6px; }
-  .plot-tabs button:last-child  { border-radius: 0 6px 6px 0; }
-  .plot-tabs button.active {
-    background: #5b7bb5;
-    color: #fff;
-    border-color: #5b7bb5;
-  }
-  /* ── Plots ── */
-  .plots {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    padding: 0 20px;
-    flex-wrap: wrap;
-  }
-  .plot-box {
-    flex: 1 1 540px;
-    max-width: 660px;
-    min-width: 400px;
-    height: 460px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  }
-  /* ── Controls ── */
-  .controls {
-    max-width: 700px;
-    margin: 14px auto 30px;
-    padding: 0 20px;
-  }
-  .group-title {
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: #444;
-    margin: 14px 0 6px;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 3px;
-  }
-  .slider-row {
-    display: flex;
-    align-items: center;
-    margin: 5px 0;
-    gap: 8px;
-  }
-  .slider-desc {
-    flex: 0 0 160px;
-    font-size: 0.82rem;
-    color: #777;
-    text-align: right;
-    padding-right: 6px;
-  }
-  .slider-label {
-    flex: 0 0 70px;
-    font-size: 0.88rem;
-    text-align: right;
-    padding-right: 4px;
-  }
-  .slider-row input[type=range] {
-    flex: 1 1 200px;
-    accent-color: #5b7bb5;
-    cursor: pointer;
-  }
-  .slider-val {
-    flex: 0 0 65px;
-    font-size: 0.85rem;
-    text-align: left;
-    font-variant-numeric: tabular-nums;
-    color: #555;
-  }
-  .opts {
-    display: flex;
-    justify-content: center;
-    gap: 18px;
-    margin: 8px 0 4px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-  .opts label { font-size: 0.88rem; cursor: pointer; }
-  .opts button {
-    padding: 4px 14px;
-    font-size: 0.85rem;
-    border: 1px solid #aaa;
-    border-radius: 4px;
-    background: #eee;
-    cursor: pointer;
-  }
-  .opts button:hover { background: #ddd; }
-  #loading {
-    text-align: center;
-    padding: 60px;
-    font-size: 1.1rem;
-    color: #888;
-  }
-  details.lagrangian {
-    max-width: 820px;
-    margin: 4px auto 10px;
-    padding: 0 20px;
-    font-size: 0.92rem;
-    line-height: 1.6;
-  }
-  details.lagrangian summary {
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.95rem;
-    color: #444;
-    user-select: none;
-  }
-  details.lagrangian .lag-body {
-    margin-top: 6px;
-    padding: 10px 14px;
-    background: #fff;
-    border-radius: 6px;
-    border: 1px solid #e0e0e0;
-    overflow-x: auto;
-  }
-  details.lagrangian .lag-body p { margin: 4px 0; }
-  .term-self { color: #1f77b4; }
-  .term-mix  { color: #ff7f0e; }
-  footer {
-    text-align: center;
-    font-size: 0.75rem;
-    color: #aaa;
-    padding: 10px 0 20px;
-  }
-
-  /* ── Mobile (< 800px) ── */
-  @media (max-width: 800px) {
-    h1 { font-size: 1.2rem; padding: 12px 0 4px; }
-    .plot-tabs { display: flex; }
-    .plots { padding: 0 8px; gap: 0; }
-    .plot-box {
-      min-width: 0;
-      width: 100%;
-      flex: none;
-      height: 350px;
-    }
-    .plot-box.hidden-mobile { display: none; }
-    .controls { padding: 0 10px; margin-top: 8px; }
-    .slider-desc { display: none; }
-    .slider-label { flex: 0 0 55px; font-size: 0.82rem; }
-    .slider-val { flex: 0 0 50px; font-size: 0.8rem; }
-    .group-title { font-size: 0.88rem; margin: 10px 0 4px; }
-    .opts { gap: 10px; margin: 6px 0 2px; }
-    .opts label { font-size: 0.82rem; }
-    details.lagrangian { font-size: 0.8rem; padding: 0 10px; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f6fa; color: #333; }
+  h1 { text-align: center; padding: 18px 0 4px; font-size: 1.5rem; font-weight: 700; color: #222; }
+  .mode-toggle { display:flex; justify-content:center; gap:0; margin:4px 0 8px; }
+  .mode-toggle button { padding:6px 20px; font-size:0.9rem; font-weight:600; border:1px solid #bbb;
+    background:#e8e8e8; color:#555; cursor:pointer; transition:background .15s; }
+  .mode-toggle button:first-child { border-radius:6px 0 0 6px; }
+  .mode-toggle button:last-child  { border-radius:0 6px 6px 0; }
+  .mode-toggle button.active { background:#5b7bb5; color:#fff; border-color:#5b7bb5; }
+  .plot-tabs { display: none; justify-content: center; gap: 0; margin: 0 20px 6px; }
+  .plot-tabs button { flex:1; max-width:160px; padding:7px 0; font-size:0.9rem; font-weight:600;
+    border:1px solid #bbb; background:#e8e8e8; color:#555; cursor:pointer; transition:background .15s; }
+  .plot-tabs button:first-child { border-radius:6px 0 0 6px; }
+  .plot-tabs button:last-child  { border-radius:0 6px 6px 0; }
+  .plot-tabs button.active { background:#5b7bb5; color:#fff; border-color:#5b7bb5; }
+  .plots { display:flex; justify-content:center; gap:12px; padding:0 20px; flex-wrap:wrap; }
+  .plot-box { flex:1 1 540px; max-width:660px; min-width:400px; height:460px; background:#fff;
+    border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.08); }
+  .controls { max-width:700px; margin:14px auto 30px; padding:0 20px; }
+  .group-title { font-weight:700; font-size:0.95rem; color:#444; margin:14px 0 6px;
+    border-bottom:1px solid #ddd; padding-bottom:3px; }
+  .slider-row { display:flex; align-items:center; margin:5px 0; gap:8px; }
+  .slider-desc { flex:0 0 160px; font-size:0.82rem; color:#777; text-align:right; padding-right:6px; }
+  .slider-label { flex:0 0 80px; font-size:0.88rem; text-align:right; padding-right:4px; }
+  .slider-row input[type=range] { flex:1 1 200px; accent-color:#5b7bb5; cursor:pointer; }
+  .slider-val { flex:0 0 65px; font-size:0.85rem; text-align:left; font-variant-numeric:tabular-nums; color:#555; }
+  .opts { display:flex; justify-content:center; gap:18px; margin:8px 0 4px; align-items:center; flex-wrap:wrap; }
+  .opts label { font-size:0.88rem; cursor:pointer; }
+  .opts button { padding:4px 14px; font-size:0.85rem; border:1px solid #aaa; border-radius:4px; background:#eee; cursor:pointer; }
+  .opts button:hover { background:#ddd; }
+  #loading { text-align:center; padding:60px; font-size:1.1rem; color:#888; }
+  details.lagrangian { max-width:860px; margin:4px auto 10px; padding:0 20px; font-size:0.92rem; line-height:1.6; }
+  details.lagrangian summary { cursor:pointer; font-weight:600; font-size:0.95rem; color:#444; user-select:none; }
+  details.lagrangian .lag-body { margin-top:6px; padding:10px 14px; background:#fff; border-radius:6px;
+    border:1px solid #e0e0e0; overflow-x:auto; }
+  details.lagrangian .lag-body p { margin:4px 0; }
+  .term-self { color:#1f77b4; } .term-mix { color:#ff7f0e; }
+  footer { text-align:center; font-size:0.75rem; color:#aaa; padding:10px 0 20px; }
+  @media (max-width:800px) {
+    h1 { font-size:1.2rem; padding:12px 0 4px; }
+    .plot-tabs { display:flex; }
+    .plots { padding:0 8px; gap:0; }
+    .plot-box { min-width:0; width:100%; flex:none; height:350px; }
+    .plot-box.hidden-mobile { display:none; }
+    .controls { padding:0 10px; margin-top:8px; }
+    .slider-desc { display:none; }
+    .slider-label { flex:0 0 60px; font-size:0.82rem; }
+    .slider-val { flex:0 0 50px; font-size:0.8rem; }
+    .group-title { font-size:0.88rem; margin:10px 0 4px; }
+    .opts { gap:10px; margin:6px 0 2px; }
+    .opts label { font-size:0.82rem; }
+    details.lagrangian { font-size:0.8rem; padding:0 10px; }
   }
 </style>
 </head>
 <body>
 
-<h1>Massive Scalar Exchange (Weak Mixing)</h1>
-<p style="text-align:center; margin:-2px 0 6px; font-size:0.9rem;"><a href="strong/">→ Massive Scalar Exchange (General Mixing)</a></p>
+<h1 id="h1">Massive Scalar Exchange</h1>
+<div class="mode-toggle">
+  <button id="btn-weak" class="active">Weak mixing</button>
+  <button id="btn-gen">General mixing</button>
+</div>
 
 <details class="lagrangian">
   <summary>Show Lagrangian</summary>
-  <div class="lag-body">
-    <p>$$\frac{\mathcal{L}}{a^3} = \frac{1}{2}\!\left[\dot{\pi}_c^2 - c_{\rm rel}^2\frac{(\partial_i\pi_c)^2}{a^2}\right] + \frac{1}{2}\!\left[\dot{\sigma}_c^2 - \frac{(\partial_i\sigma_c)^2}{a^2} - m^2\sigma_c^2\right] + \color{#ff7f0e}{\rho\,\dot{\pi}_c\,\sigma_c}$$</p>
-    <p>$$\quad \color{#1f77b4}{-\,\lambda(\partial_\mu\pi_c)^2\dot{\pi}_c - \Delta\lambda\,\dot{\pi}_c^3} \;\;\color{#ff7f0e}{-\,\frac{\kappa}{2}(\partial_\mu\pi_c)^2\sigma_c - \frac{\Delta\kappa}{2}\dot{\pi}_c^2\,\sigma_c}$$</p>
-    <p style="font-size:0.85rem; margin-top:6px;">where $\pi_c,\,\sigma_c$ are canonically normalized fields and</p>
-    <p>$$c_{\rm rel} = \frac{c_\pi}{c_\sigma},\quad \lambda = \frac{(1-c_\pi^2)}{2\,f_\pi^2}\,c_{\rm rel}^{3/2},\quad \Delta\lambda = -\frac{1}{3}\frac{\tilde{c}_3}{c_\pi^2}\frac{(1-c_\pi^2)}{f_\pi^2}\,c_{\rm rel}^{3/2}$$</p>
-    <p>$$m = c_\sigma\,m_\sigma,\quad \kappa = \frac{c_{\rm rel}^{3/2}}{f_\pi^2}\,\rho,\quad \Delta\kappa = \frac{c_{\rm rel}^{3/2}}{f_\pi^2}\,\Delta\rho$$</p>
-    <p style="font-size:0.85rem;">with $\mu = \sqrt{m^2/H^2 - 9/4}$ and $f_\pi = H\,(4\pi^2\Delta_\zeta^2)^{-1/4}$. The couplings $\tilde{c}_3$ and $\Delta\rho$ parametrize boost-breaking ($\tilde{c}_3=\Delta\rho=0$ is boost-invariant).</p>
-    <p style="font-size:0.85rem; color:#666;">
-      <span class="term-self">Blue: self-interactions</span> &nbsp;|&nbsp;
-      <span class="term-mix">Orange: mixing/exchange</span>
-    </p>
-  </div>
+  <div class="lag-body"></div>
 </details>
 
-<div id="loading">Loading shape data...</div>
+<div id="loading">Loading shape data…</div>
 
 <div id="app" style="display:none;">
   <div class="plot-tabs">
@@ -221,17 +88,13 @@
     <div id="plot1d" class="plot-box"></div>
     <div id="plot2d" class="plot-box"></div>
   </div>
-
   <div class="controls">
     <div class="opts">
       <label><input type="checkbox" id="logY"> Log y-axis</label>
       <label><input type="checkbox" id="divX" checked> Divide by x</label>
       <button id="resetBtn">Reset</button>
     </div>
-    <div class="group-title">Self-Interactions</div>
-    <div id="self-sliders"></div>
-    <div class="group-title">Weak Mixing</div>
-    <div id="mix-sliders"></div>
+    <div id="slider-groups"></div>
   </div>
 </div>
 
@@ -240,517 +103,349 @@
 <script>
 "use strict";
 
-// ═══════════════════════════════════════════════════
-// Constants
-// ═══════════════════════════════════════════════════
-const Delta2_zeta = 2.100549e-9;
-const H = 1.0;
-const F_pi = H / Math.pow(4.0 * Math.PI * Math.PI * Delta2_zeta, 0.25);
-const R = Math.pow(2.0, 1.0/8.0);
-const sqR = Math.sqrt(R);
-const FLOOR = 1e-30;
+// ═══════════════ shared constants ═══════════════
+const Delta2_zeta = 2.100549e-9, H = 1.0;
+const F_pi = H / Math.pow(4.0*Math.PI*Math.PI*Delta2_zeta, 0.25);
+const R = Math.pow(2.0, 1.0/8.0), sqR = Math.sqrt(R), FLOOR = 1e-30;
+const OPS = ['del2pi_dotpi','dot3pi','del2pi_sigma','dot2pi_sigma','dotpi_sigma2','sigma3','delpi_delsigma_dotsigma'];
 
-// ═══════════════════════════════════════════════════
-// Slider definitions
-// ═══════════════════════════════════════════════════
-const DEFAULTS = {mu:2.5, lcpi:-1.0, lcsig:0.0, c3:0.0, rho:1.0, drho:0.0};
-const SLIDER_DEFS = [
-  ['lcpi', 'log₁₀ c<sub>π</sub>',  -2.0,  0.0, 0.05, DEFAULTS.lcpi, 'Goldstone sound-speed', 'self'],
-  ['c3',   '$\\tilde{c}_3$', -10, 10, 0.1, DEFAULTS.c3,
-   '$\\dot{\\pi}^3$ self-interaction', 'self'],
-  ['mu',   'μ',                      0.0,  6.0, 0.10, DEFAULTS.mu,  'Scalar Mass', 'mix'],
-  ['lcsig','log₁₀ c<sub>σ</sub>',  -2.0,  0.0, 0.05, DEFAULTS.lcsig,'Scalar sound-speed', 'mix'],
-  ['rho',  'ρ',                    -10.0, 10.0, 0.05, DEFAULTS.rho,
-   '$\\dot{\\pi}\\sigma$ mixing', 'mix'],
-  ['drho', 'Δρ',                  -250.0, 250.0, 0.5, DEFAULTS.drho,
-   '$\\dot{\\pi}^2\\sigma$ weak mixing', 'mix'],
-];
+// ═══════════════ globals ═══════════════
+let MODE='weak', DATA=null, COEF=null;
+const DATAS={weak:null, general:null};
+let sliderEls={}, valEls={}, useLogY=false, divideByX=true, activeTab='1d', plotsInitialized=false;
 
-// ═══════════════════════════════════════════════════
-// Globals
-// ═══════════════════════════════════════════════════
-let DATA = null;
-let sliderEls = {};
-let valEls = {};
-let useLogY = false;
-let divideByX = true;
-let activeTab = '1d';  // '1d' or '2d'
+// ═══════════════ Lagrangian blocks ═══════════════
+const LAG_WEAK = `
+  <p>$$\\frac{\\mathcal{L}}{a^3} = \\tfrac{1}{2}\\!\\left[\\dot{\\pi}_c^2 - c_{\\rm rel}^2\\tfrac{(\\partial_i\\pi_c)^2}{a^2}\\right] + \\tfrac{1}{2}\\!\\left[\\dot{\\sigma}_c^2 - \\tfrac{(\\partial_i\\sigma_c)^2}{a^2} - m^2\\sigma_c^2\\right] + \\color{#ff7f0e}{\\rho\\,\\dot{\\pi}_c\\,\\sigma_c}$$</p>
+  <p>$$\\color{#1f77b4}{-\\,\\lambda(\\partial_\\mu\\pi_c)^2\\dot{\\pi}_c - \\Delta\\lambda\\,\\dot{\\pi}_c^3} \\;\\;\\color{#ff7f0e}{-\\,\\tfrac{\\kappa}{2}(\\partial_\\mu\\pi_c)^2\\sigma_c - \\tfrac{\\Delta\\kappa}{2}\\dot{\\pi}_c^2\\,\\sigma_c}$$</p>
+  <p style="font-size:0.85rem;">$$c_{\\rm rel}=\\frac{c_\\pi}{c_\\sigma},\\quad \\lambda=\\frac{(1-c_\\pi^2)}{2f_\\pi^2}c_{\\rm rel}^{3/2},\\quad \\Delta\\lambda=-\\frac{1}{3}\\frac{\\tilde{c}_3}{c_\\pi^2}\\frac{(1-c_\\pi^2)}{f_\\pi^2}c_{\\rm rel}^{3/2}$$</p>
+  <p style="font-size:0.85rem;">$$\\kappa=\\frac{c_{\\rm rel}^{3/2}}{f_\\pi^2}\\rho,\\quad \\Delta\\kappa=\\frac{c_{\\rm rel}^{3/2}}{f_\\pi^2}\\Delta\\rho,\\quad f_\\pi=H(4\\pi^2\\Delta_\\zeta^2)^{-1/4}$$</p>
+  <p style="font-size:0.85rem; color:#666;">Weak (perturbative) mixing: the exchange is linear in $\\rho$. $\\tilde{c}_3$ and $\\Delta\\rho$ parametrize boost-breaking ($\\tilde{c}_3=\\Delta\\rho=0$ is boost-invariant).</p>`;
 
-// ═══════════════════════════════════════════════════
-// Mobile detection & tab switching
-// ═══════════════════════════════════════════════════
-function isMobile() { return window.innerWidth <= 800; }
+const LAG_GEN = `
+  <p>$$\\frac{\\mathcal{L}}{a^3} = \\tfrac{1}{2}\\!\\left[\\dot{\\pi}_c^2 - c_{\\rm rel}^2\\tfrac{(\\partial_i\\pi_c)^2}{a^2}\\right] + \\tfrac{1}{2}\\!\\left[\\dot{\\sigma}_c^2 - \\tfrac{(\\partial_i\\sigma_c)^2}{a^2} - m^2\\sigma_c^2\\right] + \\color{#ff7f0e}{\\rho\\,\\dot{\\pi}_c\\,\\sigma_c}$$</p>
+  <p>$$\\color{#1f77b4}{-\\,\\lambda(\\partial_\\mu\\pi_c)^2\\dot{\\pi}_c - \\Delta\\lambda\\,\\dot{\\pi}_c^3}\\;\\;\\color{#ff7f0e}{-\\,\\tfrac{\\kappa}{2}(\\partial_\\mu\\pi_c)^2\\sigma_c - \\tfrac{\\Delta\\kappa}{2}\\dot{\\pi}_c^2\\sigma_c - \\tfrac{\\alpha}{2}\\dot{\\pi}_c\\sigma_c^2 - \\mu\\,\\sigma_c^3 - \\beta\\tfrac{\\partial_i\\pi_c\\partial_i\\sigma_c}{a^2}\\dot{\\sigma}_c}$$</p>
+  <p style="font-size:0.85rem;">$$c_{\\rm rel}=\\frac{c_\\pi}{c_\\sigma},\\quad \\lambda=\\frac{(1-c_\\pi^2)}{2f_\\pi^2}c_{\\rm rel}^{3/2},\\quad \\Delta\\lambda=-\\frac{1}{3}\\frac{\\tilde{c}_3}{c_\\pi^2}\\frac{(1-c_\\pi^2)}{f_\\pi^2}c_{\\rm rel}^{3/2}$$</p>
+  <p style="font-size:0.85rem;">$$\\kappa=\\frac{c_{\\rm rel}^{3/2}}{f_\\pi^2}\\rho,\\quad \\Delta\\kappa=\\frac{c_{\\rm rel}^{3/2}}{f_\\pi^2}\\Delta\\rho,\\quad \\beta=\\frac{c_\\sigma^{-2}-1}{f_\\pi^2}c_{\\rm rel}^{3/2}$$</p>
+  <p style="font-size:0.85rem;">with scalar mass $m$ (in units of $H$), $f_\\pi=H(4\\pi^2\\Delta_\\zeta^2)^{-1/4}$, and $\\rho$ non-perturbative. $\\alpha$ ($\\dot\\pi\\sigma^2$) and $\\mu$ ($\\sigma^3$) are set directly by the sliders.</p>
+  <p style="font-size:0.85rem; color:#666;">Each $\\sigma$ leg requires one $\\rho$-insertion, so vertices with 1, 2, 3 $\\sigma$ fields give <b>single</b>, <b>double</b>, <b>triple</b> exchange (plotted separately). Shapes are interpolated from a finite grid and carry some residual numerical noise.</p>`;
 
-function setActiveTab(tab) {
-  activeTab = tab;
-  const el1d = document.getElementById('plot1d');
-  const el2d = document.getElementById('plot2d');
-  const btn1d = document.getElementById('tab1d');
-  const btn2d = document.getElementById('tab2d');
-  if (isMobile()) {
-    el1d.classList.toggle('hidden-mobile', tab !== '1d');
-    el2d.classList.toggle('hidden-mobile', tab !== '2d');
-  } else {
-    el1d.classList.remove('hidden-mobile');
-    el2d.classList.remove('hidden-mobile');
-  }
-  btn1d.classList.toggle('active', tab === '1d');
-  btn2d.classList.toggle('active', tab === '2d');
-  // Plotly needs a resize after visibility change
-  requestAnimationFrame(() => {
-    Plotly.Plots.resize(tab === '1d' ? el1d : el2d);
-  });
+// ═══════════════ mode configs ═══════════════
+const CFG = {
+  weak: {
+    title:'Massive Scalar Exchange (Weak Mixing)',
+    lagrangian:LAG_WEAK, xmin:1e-3,
+    defaults:{m:2.92, lcpi:-1.0, lcsig:0.0, c3:0.0, rho:1.0, drho:0.0},
+    groups:[['self','Self-interactions'],['mix','Weak mixing']],
+    sliders:[
+      ['lcpi','log₁₀ c<sub>π</sub>', -2.0, 0.0, 0.05, -1.0, 'Goldstone sound-speed','self'],
+      ['c3','$\\tilde{c}_3$',        -10., 10., 0.1,  0.0, '$\\dot{\\pi}^3$ self-interaction','self'],
+      ['m','m/H',                     1.5, 6.0, 0.05, 2.92,'Scalar mass','mix'],
+      ['lcsig','log₁₀ c<sub>σ</sub>',-2.0, 0.0, 0.05, 0.0, 'Scalar sound-speed','mix'],
+      ['rho','ρ',                   -10.,10., 0.05, 1.0, '$\\dot{\\pi}\\sigma$ mixing','mix'],
+      ['drho','Δρ',                -250.,250.,0.5,  0.0, '$\\dot{\\pi}^2\\sigma$ weak mixing','mix'],
+    ],
+    fmt:(k,v)=>{ if(k==='m'||k==='lcpi'||k==='lcsig'||k==='rho') return v.toFixed(2);
+                 if(k==='drho'||k==='c3') return v.toFixed(1); return v.toFixed(0); },
+    load:loadWeak, compute:computeWeak,
+  },
+  general: {
+    title:'Massive Scalar Exchange (General Mixing)',
+    lagrangian:LAG_GEN, xmin:0.01,
+    defaults:{m:3.0, lcpi:-1.0, lcsig:0.0, lrho:0.0, dr:0.0, c3:0.0, al:0.0, mus:0.0},
+    groups:[['bg','Quadratic theory'],['op','Cubic theory']],
+    sliders:[
+      ['m','m/H',                   1.5, 5.0, 0.05, 3.0, 'Scalar mass','bg'],
+      ['lcpi','log₁₀ c<sub>π</sub>',-2.0,0.0, 0.05,-1.0, 'Goldstone sound-speed','bg'],
+      ['lcsig','log₁₀ c<sub>σ</sub>',-1.0,0.0,0.05, 0.0, 'Scalar sound-speed','bg'],
+      ['lrho','log₁₀ ρ',           -4.0,3.0, 0.05, 0.0, 'Mixing strength','bg'],
+      ['dr','Δρ',               -5000.,5000.,50., 0.0, '$\\dot{\\pi}^2\\sigma$ exchange','op'],
+      ['c3','$\\tilde{c}_3$',      -10.,10., 0.1, 0.0, '$\\dot{\\pi}^3$ self-interaction','op'],
+      ['al','α',                   -1.0,1.0, 0.02,0.0, '$\\dot{\\pi}\\sigma^2$ exchange','op'],
+      ['mus','$\\mu$',             -1.0,1.0, 0.02,0.0, '$\\sigma^3$ exchange','op'],
+    ],
+    fmt:(k,v)=>{ if(k==='m'||k==='lcpi'||k==='lcsig'||k==='lrho') return v.toFixed(2);
+                 if(k==='dr') return v.toFixed(0); if(k==='c3') return v.toFixed(1); return v.toFixed(2); },
+    load:loadGeneral, compute:computeGeneral,
+  },
+};
+
+// ═══════════════ data loading ═══════════════
+async function loadWeak(){
+  const buf=await (await fetch('shape_data.bin')).arrayBuffer();
+  const f64=new Float64Array(buf); let off=0;
+  const N_bins=f64[off++],N_mu=f64[off++],N_log10c=f64[off++],N_1d=f64[off++]; off+=2;
+  const read=(n)=>{const a=f64.subarray(off,off+n); off+=n; return a;};
+  DATAS.weak={ N_bins,N_mu,N_log10c,N_1d,
+    xs:read(N_bins), ys:read(N_bins), del_grid:read(N_bins), dot_grid:read(N_bins),
+    mu_grid:read(N_mu), log10c_grid:read(N_log10c),
+    s_dot_sc:read(N_mu*N_log10c*N_bins), s_del_sc:read(N_mu*N_log10c*N_bins),
+    mask_1d:read(N_bins), x_1d:read(N_1d) };
+}
+async function loadGeneral(){
+  const [bR,jR]=await Promise.all([fetch('strong_shape_data.bin'), fetch('strong_factor_coefs.json')]);
+  const buf=await bR.arrayBuffer(); COEF=await jR.json();
+  const dv=new DataView(buf); let off=0;
+  const rd1=()=>{const x=dv.getFloat64(off,true); off+=8; return x;};
+  const N_bins=rd1(),N_rho=rd1(),N_mu=rd1(),N_crel=rd1(),N_ops=rd1(),N_1d=rd1(); rd1(); rd1();
+  const rdF64=(n)=>{const a=new Float64Array(buf,off,n); off+=8*n; return a;};
+  const rdF32=(n)=>{const a=new Float32Array(buf,off,n); off+=4*n; return a;};
+  const xs=rdF64(N_bins), ys=rdF64(N_bins);
+  const log10rho=rdF64(N_rho), mu_grid=rdF64(N_mu), log10crel=rdF64(N_crel);
+  const cubes={}, ncube=N_rho*N_mu*N_crel*N_bins;
+  for(const k of OPS) cubes[k]=rdF32(ncube);
+  const cond_ratio=rdF32(N_rho*N_mu*N_crel);
+  const mask_1d=rdF64(N_bins), x_1d=rdF64(N_1d);
+  DATAS.general={ N_bins,N_rho,N_mu,N_crel,N_1d,xs,ys,log10rho,mu_grid,log10crel,cubes,cond_ratio,
+    mask_1d,x_1d, LOG10RHO_MIN:log10rho[0], F_pi_base:COEF.F_pi_base };
 }
 
-// ═══════════════════════════════════════════════════
-// Build slider UI
-// ═══════════════════════════════════════════════════
-function buildSliders() {
-  const selfCont = document.getElementById('self-sliders');
-  const mixCont = document.getElementById('mix-sliders');
-
-  for (const [key, label, lo, hi, step, def, desc, grp] of SLIDER_DEFS) {
-    const row = document.createElement('div');
-    row.className = 'slider-row';
-
-    const descEl = document.createElement('span');
-    descEl.className = 'slider-desc';
-    descEl.textContent = desc;
-
-    const labEl = document.createElement('span');
-    labEl.className = 'slider-label';
-    labEl.innerHTML = label;
-
-    const inp = document.createElement('input');
-    inp.type = 'range';
-    inp.min = lo; inp.max = hi; inp.step = step; inp.value = def;
-    inp.id = 'sl_' + key;
-
-    const valSpan = document.createElement('span');
-    valSpan.className = 'slider-val';
-    valSpan.textContent = fmtVal(key, def);
-
-    row.appendChild(descEl);
-    row.appendChild(labEl);
-    row.appendChild(inp);
-    row.appendChild(valSpan);
-
-    (grp === 'self' ? selfCont : mixCont).appendChild(row);
-
-    sliderEls[key] = inp;
-    valEls[key] = valSpan;
-
-    inp.addEventListener('input', function() {
-      const v = parseFloat(this.value);
-      valEls[key].textContent = fmtVal(key, v);
-      requestUpdate();
-    });
-  }
+// ═══════════════ 2D grid structure (operates on global DATA) ═══════════════
+function buildGrid(){
+  const {xs,ys,N_bins}=DATA, r8=v=>Math.round(v*1e8)/1e8;
+  const uxS=new Set(), uyS=new Set();
+  for(let i=0;i<N_bins;i++){ uxS.add(r8(xs[i])); uyS.add(r8(ys[i])); }
+  const ux=[...uxS].sort((a,b)=>a-b), uy=[...uyS].sort((a,b)=>a-b);
+  const nx=ux.length, ny=uy.length;
+  const xI=new Map(); ux.forEach((v,i)=>xI.set(v,i));
+  const yI=new Map(); uy.forEach((v,i)=>yI.set(v,i));
+  const binIx=new Int32Array(N_bins), binIy=new Int32Array(N_bins);
+  for(let i=0;i<N_bins;i++){ binIx[i]=xI.get(r8(xs[i])); binIy[i]=yI.get(r8(ys[i])); }
+  const xEdges=new Array(nx+1); for(let i=0;i<nx;i++) xEdges[i]=ux[i]/sqR; xEdges[nx]=ux[nx-1]*sqR;
+  const yEdges=new Array(ny+1); for(let i=0;i<ny;i++) yEdges[i]=uy[i]/sqR; yEdges[ny]=uy[ny-1]*sqR;
+  Object.assign(DATA,{ux,uy,nx,ny,binIx,binIy,xEdges,yEdges});
 }
 
-function fmtVal(key, v) {
-  if (key === 'mu') return v < 0.01 ? '0' : v.toFixed(2);
-  if (key === 'lcpi' || key === 'lcsig') return v.toFixed(2);
-  if (key === 'rho') return v.toFixed(2);
-  if (key === 'drho') return v.toFixed(1);
-  if (key === 'c3') return v.toFixed(1);
-  return v.toFixed(0);
+// ═══════════════ weak: bilinear interp + model ═══════════════
+function interpExchange(arr,mu,log10c){
+  const {N_mu,N_log10c,N_bins,mu_grid,log10c_grid}=DATA;
+  let imu=0; for(let i=0;i<N_mu-1;i++){ if(mu_grid[i+1]>mu) break; imu=i; } if(imu>=N_mu-1) imu=N_mu-2;
+  let ic=0;  for(let i=0;i<N_log10c-1;i++){ if(log10c_grid[i+1]>log10c) break; ic=i; } if(ic>=N_log10c-1) ic=N_log10c-2;
+  const tm=Math.max(0,Math.min(1,(mu-mu_grid[imu])/(mu_grid[imu+1]-mu_grid[imu])));
+  const tc=Math.max(0,Math.min(1,(log10c-log10c_grid[ic])/(log10c_grid[ic+1]-log10c_grid[ic])));
+  const sC=N_bins, sM=N_log10c*N_bins;
+  const b00=imu*sM+ic*sC, b10=(imu+1)*sM+ic*sC, b01=imu*sM+(ic+1)*sC, b11=(imu+1)*sM+(ic+1)*sC;
+  const w00=(1-tm)*(1-tc), w10=tm*(1-tc), w01=(1-tm)*tc, w11=tm*tc;
+  const out=new Float64Array(N_bins);
+  for(let b=0;b<N_bins;b++) out[b]=w00*arr[b00+b]+w10*arr[b10+b]+w01*arr[b01+b]+w11*arr[b11+b];
+  return out;
+}
+function computeWeak(p){
+  const cpi=Math.pow(10,p.lcpi), csigma=Math.pow(10,p.lcsig), crel=cpi/csigma;
+  const mu=Math.sqrt(Math.max(p.m*p.m-9./4.,1e-6));
+  const lam1=0.5*(1-cpi*cpi)/(F_pi*F_pi)/(csigma*csigma)*Math.pow(crel,1.5);
+  const c3var=p.c3*(1.0/(cpi*cpi)-1.0);
+  const lam2=-0.5/(F_pi*F_pi)*Math.pow(crel,1.5)*(1-cpi*cpi+2.0/3.0*c3var);
+  const rk1=p.rho*p.rho/(F_pi*F_pi)/(csigma*csigma)*Math.pow(crel,1.5);
+  const rk2=p.rho*(p.drho-p.rho)/(F_pi*F_pi)*Math.pow(crel,1.5);
+  const N=DATA.N_bins, {del_grid,dot_grid}=DATA;
+  const coeff_del=-85.0/324.0*F_pi*F_pi/0.5*Math.pow(crel,-3.5);
+  const coeff_dot=10.0/243.0*1.5/0.5*Math.pow(crel,-1.5)*F_pi*F_pi;
+  const sc_dot=mu*mu*(Math.pow(crel,-0.5)+0.1*Math.pow(crel,1.5));
+  const sc_del=mu*mu*crel*crel*(Math.pow(crel,-0.5)+0.1*Math.pow(crel,1.5));
+  const ed=interpExchange(DATA.s_del_sc,mu,Math.log10(crel)), eo=interpExchange(DATA.s_dot_sc,mu,Math.log10(crel));
+  const s_self=new Float64Array(N), s_exch=new Float64Array(N), s_tot=new Float64Array(N);
+  for(let i=0;i<N;i++){ s_self[i]=lam1*del_grid[i]*coeff_del+lam2*dot_grid[i]*coeff_dot;
+    s_exch[i]=rk1*ed[i]/sc_del+rk2*eo[i]/sc_dot; s_tot[i]=s_self[i]+s_exch[i]; }
+  return { s_tot, comps:[ {name:'Self-interaction',color:'#1f77b4',s:s_self},
+                          {name:'Mixing / exchange',color:'#ff7f0e',s:s_exch},
+                          {name:'Total',color:'#000000',s:s_tot} ],
+    title1:`m/H=${p.m.toFixed(2)}, c<sub>π</sub>=${cpi.toFixed(2)}, c<sub>σ</sub>=${csigma.toFixed(2)}`,
+    title2:`ρ=${p.rho.toFixed(1)}, Δρ=${p.drho.toFixed(1)}, c̃₃=${p.c3.toFixed(1)}` };
 }
 
-function getParams() {
-  const p = {};
-  for (const k of Object.keys(DEFAULTS)) {
-    p[k] = parseFloat(sliderEls[k].value);
+// ═══════════════ general: factors + trilinear + model ═══════════════
+function cheb(x){ const o=[1.0,x]; for(let n=2;n<=COEF.max_deg;n++) o.push(2*x*o[n-1]-o[n-2]); return o; }
+function normedP(rho,mu,crel){
+  const m2=mu>=0?9/4+mu*mu:9/4-mu*mu, me2=m2+rho*rho, nm=COEF.norm_min, nM=COEF.norm_max;
+  const n0=2*(Math.log10(Math.sqrt(m2))-nm[0])/(nM[0]-nm[0])-1;
+  const n1=2*(Math.log10(Math.sqrt(me2))-nm[1])/(nM[1]-nm[1])-1;
+  const n2=2*(Math.log10(rho)-nm[2])/(nM[2]-nm[2])-1;
+  const n3=2*(Math.log10(crel)-nm[3])/(nM[3]-nm[3])-1;
+  const T=[cheb(n0),cheb(n1),cheb(n2),cheb(n3)], degs=COEF.degs, P=new Float64Array(degs.length);
+  for(let i=0;i<degs.length;i++){ const d=degs[i]; let v=1.0; for(let a=0;a<4;a++) if(d[a]>0) v*=T[a][d[a]]; P[i]=v; }
+  return {P,f:m2/me2,g:1-m2/me2};
+}
+function factorFromP(co,f,g,P){ let s1=0,s2=0,c1=co.c1,c2=co.c2;
+  for(let i=0;i<P.length;i++){ s1+=c1[i]*P[i]; s2+=c2[i]*P[i]; }
+  return Math.pow(10, Math.pow(f,co.e1)*s1+Math.pow(g,co.e2)*s2); }
+function loc(g,v){ if(v<=g[0]) return [0,0.0]; if(v>=g[g.length-1]) return [g.length-2,1.0];
+  let i=0; while(i<g.length-1 && g[i+1]<=v) i++; return [i,(v-g[i])/(g[i+1]-g[i])]; }
+function interp3Vec(cube,lr,mu,lc){
+  const {N_mu,N_crel,N_bins,log10rho,mu_grid,log10crel}=DATA;
+  const [i,fi]=loc(log10rho,lr),[j,fj]=loc(mu_grid,mu),[k,fk]=loc(log10crel,lc);
+  const sC=N_bins, sM=N_crel*N_bins, sR=N_mu*N_crel*N_bins;
+  const w=[(1-fi)*(1-fj)*(1-fk),(1-fi)*(1-fj)*fk,(1-fi)*fj*(1-fk),(1-fi)*fj*fk,fi*(1-fj)*(1-fk),fi*(1-fj)*fk,fi*fj*(1-fk),fi*fj*fk];
+  const b=[i*sR+j*sM+k*sC,i*sR+j*sM+(k+1)*sC,i*sR+(j+1)*sM+k*sC,i*sR+(j+1)*sM+(k+1)*sC,(i+1)*sR+j*sM+k*sC,(i+1)*sR+j*sM+(k+1)*sC,(i+1)*sR+(j+1)*sM+k*sC,(i+1)*sR+(j+1)*sM+(k+1)*sC];
+  const out=new Float64Array(N_bins);
+  for(let c=0;c<8;c++){ const wc=w[c],bc=b[c]; if(wc===0) continue; for(let n=0;n<N_bins;n++) out[n]+=wc*cube[bc+n]; }
+  return out;
+}
+function interp3Scalar(arr,lr,mu,lc){
+  const {N_mu,N_crel,log10rho,mu_grid,log10crel}=DATA;
+  const [i,fi]=loc(log10rho,lr),[j,fj]=loc(mu_grid,mu),[k,fk]=loc(log10crel,lc);
+  const sM=N_crel, sR=N_mu*N_crel;
+  const w=[(1-fi)*(1-fj)*(1-fk),(1-fi)*(1-fj)*fk,(1-fi)*fj*(1-fk),(1-fi)*fj*fk,fi*(1-fj)*(1-fk),fi*(1-fj)*fk,fi*fj*(1-fk),fi*fj*fk];
+  const b=[i*sR+j*sM+k,i*sR+j*sM+(k+1),i*sR+(j+1)*sM+k,i*sR+(j+1)*sM+(k+1),(i+1)*sR+j*sM+k,(i+1)*sR+j*sM+(k+1),(i+1)*sR+(j+1)*sM+k,(i+1)*sR+(j+1)*sM+(k+1)];
+  let s=0; for(let c=0;c<8;c++) s+=w[c]*arr[b[c]]; return s;
+}
+function computeGeneral(p){
+  const cpi=Math.pow(10,p.lcpi), csigma=Math.pow(10,p.lcsig), crel=cpi/csigma;
+  const rho=Math.pow(10,p.lrho), mu=Math.sqrt(Math.max(p.m*p.m-9./4.,1e-6));
+  const lr=Math.max(p.lrho,DATA.LOG10RHO_MIN), reff=Math.pow(10,lr), lc=Math.log10(crel);
+  const {P,f,g}=normedP(reff,mu,crel);
+  const fac={}; for(const k of OPS) fac[k]=factorFromP(COEF[k],f,g,P);
+  const S={}; for(const k of OPS){ const v=interp3Vec(DATA.cubes[k],lr,mu,lc), fk=fac[k]; for(let n=0;n<v.length;n++) v[n]*=fk; S[k]=v; }
+  const ratio=interp3Scalar(DATA.cond_ratio,lr,mu,lc)*factorFromP(COEF.ratio,f,g,P);
+  const Fpi=DATA.F_pi_base*Math.pow(Math.max(ratio,1e-300),0.25), F2=Fpi*Fpi;
+  const lam1=0.5*(1-cpi*cpi)/F2/(csigma*csigma)*Math.pow(crel,1.5);
+  const lam2=-0.5/F2*Math.pow(crel,1.5)*(1-cpi*cpi);
+  const rk1=rho*rho/F2/(csigma*csigma)*Math.pow(crel,1.5);
+  const rk2=-rho*rho/F2*Math.pow(crel,1.5);
+  const beta=(1/(csigma*csigma)-1)/F2*Math.pow(crel,1.5);
+  const Deltarho2=rho*p.dr, c3var=p.c3*(1/(cpi*cpi)-1), rho2alpha=rho*rho*p.al, rho3mu=rho*rho*rho*p.mus;
+  const c3coef=-0.5/F2*Math.pow(crel,1.5)*2/3, dr2coef=1/F2*Math.pow(crel,1.5)/rho;
+  const N=DATA.N_bins;
+  const s_self=new Float64Array(N), s_single=new Float64Array(N), s_double=new Float64Array(N), s_triple=new Float64Array(N), s_tot=new Float64Array(N);
+  for(let i=0;i<N;i++){
+    s_self[i]  =lam1*S['del2pi_dotpi'][i]+(lam2+c3var*c3coef)*S['dot3pi'][i];
+    s_single[i]=rk1*S['del2pi_sigma'][i]/rho+rk2*S['dot2pi_sigma'][i]/rho+Deltarho2*dr2coef*S['dot2pi_sigma'][i];
+    s_double[i]=beta*S['delpi_delsigma_dotsigma'][i]+rho2alpha*S['dotpi_sigma2'][i]/(rho*rho);
+    s_triple[i]=rho3mu*S['sigma3'][i]/(rho*rho*rho);
+    s_tot[i]=s_self[i]+s_single[i]+s_double[i]+s_triple[i];
   }
-  if (p.mu < 0.01) p.mu = 0.001;
-  return p;
+  return { s_tot, comps:[ {name:'Self-interaction',color:'#1f77b4',s:s_self},
+                          {name:'Single exchange',color:'#ff7f0e',s:s_single},
+                          {name:'Double exchange',color:'#2ca02c',s:s_double},
+                          {name:'Triple exchange',color:'#d62728',s:s_triple},
+                          {name:'Total',color:'#000000',s:s_tot} ],
+    title1:`m/H=${p.m.toFixed(2)}, c<sub>π</sub>=${cpi.toFixed(2)}, c<sub>σ</sub>=${csigma.toFixed(2)}, ρ=${rho.toPrecision(2)}`,
+    title2:`Δρ=${p.dr.toFixed(0)}, α=${p.al.toFixed(2)}, μ=${p.mus.toFixed(2)}` };
 }
 
-function resetSliders() {
-  for (const k of Object.keys(DEFAULTS)) {
-    sliderEls[k].value = DEFAULTS[k];
-    valEls[k].textContent = fmtVal(k, DEFAULTS[k]);
-  }
-  requestUpdate();
-}
-
-// ═══════════════════════════════════════════════════
-// Data loading
-// ═══════════════════════════════════════════════════
-async function loadData() {
-  const resp = await fetch('shape_data.bin');
-  const buf = await resp.arrayBuffer();
-  const f64 = new Float64Array(buf);
-
-  let off = 0;
-  const N_bins = f64[off++];
-  const N_mu = f64[off++];
-  const N_log10c = f64[off++];
-  const N_1d = f64[off++];
-  off += 2;
-
-  const read = (n) => { const a = f64.subarray(off, off+n); off += n; return a; };
-
-  DATA = {
-    N_bins, N_mu, N_log10c, N_1d,
-    xs:         read(N_bins),
-    ys:         read(N_bins),
-    del_grid:   read(N_bins),
-    dot_grid:   read(N_bins),
-    mu_grid:    read(N_mu),
-    log10c_grid:read(N_log10c),
-    s_dot_sc:   read(N_mu * N_log10c * N_bins),
-    s_del_sc:   read(N_mu * N_log10c * N_bins),
-    mask_1d:    read(N_bins),
-    x_1d:       read(N_1d),
-  };
-}
-
-// ═══════════════════════════════════════════════════
-// Build 2D heatmap grid structure
-// ═══════════════════════════════════════════════════
-function buildGrid() {
-  const {xs, ys, N_bins} = DATA;
-  const round8 = v => Math.round(v * 1e8) / 1e8;
-
-  const uxSet = new Set();
-  const uySet = new Set();
-  for (let i = 0; i < N_bins; i++) {
-    uxSet.add(round8(xs[i]));
-    uySet.add(round8(ys[i]));
-  }
-  const ux = [...uxSet].sort((a,b) => a - b);
-  const uy = [...uySet].sort((a,b) => a - b);
-  const nx = ux.length, ny = uy.length;
-
-  const xIdx = new Map();
-  ux.forEach((v, i) => xIdx.set(v, i));
-  const yIdx = new Map();
-  uy.forEach((v, i) => yIdx.set(v, i));
-
-  const binIx = new Int32Array(N_bins);
-  const binIy = new Int32Array(N_bins);
-  for (let i = 0; i < N_bins; i++) {
-    binIx[i] = xIdx.get(round8(xs[i]));
-    binIy[i] = yIdx.get(round8(ys[i]));
-  }
-
-  const xEdges = new Array(nx + 1);
-  for (let i = 0; i < nx; i++) xEdges[i] = ux[i] / sqR;
-  xEdges[nx] = ux[nx-1] * sqR;
-
-  const yEdges = new Array(ny + 1);
-  for (let i = 0; i < ny; i++) yEdges[i] = uy[i] / sqR;
-  yEdges[ny] = uy[ny-1] * sqR;
-
-  DATA.ux = ux; DATA.uy = uy;
-  DATA.nx = nx; DATA.ny = ny;
-  DATA.binIx = binIx; DATA.binIy = binIy;
-  DATA.xEdges = xEdges; DATA.yEdges = yEdges;
-}
-
-// ═══════════════════════════════════════════════════
-// Bilinear interpolation
-// ═══════════════════════════════════════════════════
-function interpExchange(scaled_arr, mu, log10c) {
-  const {N_mu, N_log10c, N_bins, mu_grid, log10c_grid} = DATA;
-
-  let imu = 0;
-  for (let i = 0; i < N_mu - 1; i++) {
-    if (mu_grid[i+1] > mu) break;
-    imu = i;
-  }
-  if (imu >= N_mu - 1) imu = N_mu - 2;
-
-  let ic = 0;
-  for (let i = 0; i < N_log10c - 1; i++) {
-    if (log10c_grid[i+1] > log10c) break;
-    ic = i;
-  }
-  if (ic >= N_log10c - 1) ic = N_log10c - 2;
-
-  const tm = Math.max(0, Math.min(1,
-    (mu - mu_grid[imu]) / (mu_grid[imu+1] - mu_grid[imu])));
-  const tc = Math.max(0, Math.min(1,
-    (log10c - log10c_grid[ic]) / (log10c_grid[ic+1] - log10c_grid[ic])));
-
-  const result = new Float64Array(N_bins);
-  const stride_c = N_bins;
-  const stride_mu = N_log10c * N_bins;
-  const base00 = imu * stride_mu + ic * stride_c;
-  const base10 = (imu+1) * stride_mu + ic * stride_c;
-  const base01 = imu * stride_mu + (ic+1) * stride_c;
-  const base11 = (imu+1) * stride_mu + (ic+1) * stride_c;
-
-  const w00 = (1-tm) * (1-tc);
-  const w10 = tm * (1-tc);
-  const w01 = (1-tm) * tc;
-  const w11 = tm * tc;
-
-  for (let b = 0; b < N_bins; b++) {
-    result[b] = w00*scaled_arr[base00+b] + w10*scaled_arr[base10+b]
-              + w01*scaled_arr[base01+b] + w11*scaled_arr[base11+b];
-  }
-  return result;
-}
-
-// ═══════════════════════════════════════════════════
-// Compute shape
-// ═══════════════════════════════════════════════════
-function computeShape(p) {
-  const cpi = Math.pow(10, p.lcpi);
-  const csigma = Math.pow(10, p.lcsig);
-  const crel = cpi / csigma;
-
-  const lam1 = 0.5 * (1 - cpi*cpi) / (F_pi*F_pi) / (csigma*csigma) * Math.pow(crel, 1.5);
-  const c3var = p.c3 * (1.0/(cpi*cpi) - 1.0);   // c3~ -> c3~(c_pi^-2 - 1)
-  const lam2 = -0.5 / (F_pi*F_pi) * Math.pow(crel, 1.5) * (1 - cpi*cpi + 2.0/3.0 * c3var);
-  const rk1 = p.rho*p.rho / (F_pi*F_pi) / (csigma*csigma) * Math.pow(crel, 1.5);
-  // kappa_2 = -(rho - Deltarho) c_rel^3/2 / f_pi^2  =>  rho*kappa_2 = rho*(Deltarho - rho) c_rel^3/2 / f_pi^2
-  const rk2 = p.rho * (p.drho - p.rho) / (F_pi*F_pi) * Math.pow(crel, 1.5);
-
-  const N = DATA.N_bins;
-  const {del_grid, dot_grid} = DATA;
-
-  const coeff_del = -85.0/324.0 * F_pi*F_pi / 0.5 * Math.pow(crel, -3.5);
-  const coeff_dot = 10.0/243.0 * 1.5/0.5 * Math.pow(crel, -1.5) * F_pi*F_pi;
-
-  const log10c_rel = Math.log10(crel);
-  const sc_dot = p.mu*p.mu * (Math.pow(crel, -0.5) + 0.1*Math.pow(crel, 1.5));
-  const sc_del = p.mu*p.mu * crel*crel * (Math.pow(crel, -0.5) + 0.1*Math.pow(crel, 1.5));
-
-  const exch_dot_raw = interpExchange(DATA.s_dot_sc, p.mu, log10c_rel);
-  const exch_del_raw = interpExchange(DATA.s_del_sc, p.mu, log10c_rel);
-
-  const s_self = new Float64Array(N);
-  const s_exch = new Float64Array(N);
-  const s_tot = new Float64Array(N);
-
-  for (let i = 0; i < N; i++) {
-    s_self[i] = lam1 * del_grid[i] * coeff_del + lam2 * dot_grid[i] * coeff_dot;
-    s_exch[i] = rk1 * exch_del_raw[i] / sc_del + rk2 * exch_dot_raw[i] / sc_dot;
-    s_tot[i] = s_self[i] + s_exch[i];
-  }
-
-  return {s_self, s_exch, s_tot};
-}
-
-// ═══════════════════════════════════════════════════
-// Plotting
-// ═══════════════════════════════════════════════════
-let plotsInitialized = false;
-
-function updatePlots() {
-  const p = getParams();
-  const {s_self, s_exch, s_tot} = computeShape(p);
-  const {x_1d, mask_1d, N_bins, N_1d, nx, ny, binIx, binIy, xEdges, yEdges} = DATA;
-
-  // ── 1D slice ──
-  const self1d = new Float64Array(N_1d);
-  const exch1d = new Float64Array(N_1d);
-  const tot1d = new Float64Array(N_1d);
-  let j = 0;
-  for (let i = 0; i < N_bins; i++) {
-    if (mask_1d[i] > 0.5) {
-      const denom = divideByX ? x_1d[j] : 1.0;
-      self1d[j] = s_self[i] / denom;
-      exch1d[j] = s_exch[i] / denom;
-      tot1d[j] = s_tot[i] / denom;
-      j++;
+// ═══════════════ slider UI ═══════════════
+function buildSliders(){
+  const cont=document.getElementById('slider-groups'); cont.innerHTML=''; sliderEls={}; valEls={};
+  const cfg=CFG[MODE];
+  for(const [tag,title] of cfg.groups){
+    const h=document.createElement('div'); h.className='group-title'; h.textContent=title; cont.appendChild(h);
+    const box=document.createElement('div'); cont.appendChild(box);
+    for(const sd of cfg.sliders){ if(sd[7]!==tag) continue;
+      const [key,label,lo,hi,step,def,desc]=sd;
+      const row=document.createElement('div'); row.className='slider-row';
+      const d=document.createElement('span'); d.className='slider-desc'; d.innerHTML=desc;
+      const l=document.createElement('span'); l.className='slider-label'; l.innerHTML=label;
+      const inp=document.createElement('input'); inp.type='range'; inp.min=lo; inp.max=hi; inp.step=step;
+      inp.value=(key in cfg.defaults)?cfg.defaults[key]:def; inp.id='sl_'+key;
+      const v=document.createElement('span'); v.className='slider-val'; v.textContent=cfg.fmt(key,parseFloat(inp.value));
+      row.append(d,l,inp,v); box.appendChild(row);
+      sliderEls[key]=inp; valEls[key]=v;
+      inp.addEventListener('input',function(){ valEls[key].textContent=cfg.fmt(key,parseFloat(this.value)); requestUpdate(); });
     }
   }
-
-  const cpi = Math.pow(10, p.lcpi).toFixed(2);
-  const csig = Math.pow(10, p.lcsig).toFixed(2);
-  const muLabel = p.mu < 0.01 ? '0' : p.mu.toFixed(2);
-  const title1 = `μ=${muLabel}, c<sub>π</sub>=${cpi}, c<sub>σ</sub>=${csig}`;
-  const title2 = `ρ=${p.rho.toFixed(1)}, Δρ=${p.drho.toFixed(1)}, c̃₃=${p.c3.toFixed(1)}`;
-
-  // ── 1D Plot traces ──
-  const traces1d = [];
-  const comps = [
-    {arr: self1d, name: 'Self-interaction', color: '#1f77b4'},
-    {arr: exch1d, name: 'Weak mixing',      color: '#ff7f0e'},
-    {arr: tot1d,  name: 'Total',             color: '#000000'},
-  ];
-
-  if (useLogY) {
-    for (const {arr, name, color} of comps) {
-      const xv = [], pos_y = [], neg_y = [];
-      for (let i = 0; i < N_1d; i++) {
-        xv.push(x_1d[i]);
-        pos_y.push(arr[i] > FLOOR ? arr[i] : null);
-        neg_y.push(-arr[i] > FLOOR ? -arr[i] : null);
-      }
-      traces1d.push({x: xv, y: pos_y, name, mode: 'lines',
-        line: {color, width: 2.5}, showlegend: true});
-      traces1d.push({x: xv, y: neg_y, name: name+' (neg)', mode: 'lines',
-        line: {color, width: 2, dash: 'dot'}, showlegend: false});
-    }
-  } else {
-    for (const {arr, name, color} of comps) {
-      const xv = [], yv = [];
-      for (let i = 0; i < N_1d; i++) {
-        xv.push(x_1d[i]);
-        yv.push(arr[i]);
-      }
-      traces1d.push({x: xv, y: yv, name, mode: 'lines',
-        line: {color, width: 2.5}, showlegend: true});
-    }
-  }
-
-  const layout1d = {
-    title: {text: title1, font: {size: 14}},
-    xaxis: {type: 'log', title: {text: 'x = k₁/k₃', font: {size: 13}}, range: [-3, 0]},
-    yaxis: {type: useLogY ? 'log' : 'linear',
-            title: {text: divideByX ? 'S(x,1) / x' : 'S(x,1)', font: {size: 13}}, autorange: true},
-    legend: {x: 0.98, y: 0.98, xanchor: 'right', yanchor: 'top',
-             bgcolor: 'rgba(255,255,255,0.85)', bordercolor: '#ccc', borderwidth: 1,
-             font: {size: 11}},
-    margin: {l: 65, r: 15, t: 45, b: 55},
-    shapes: useLogY ? [] : [{
-      type: 'line', x0: 1e-3, x1: 1, y0: 0, y1: 0, xref: 'x', yref: 'y',
-      line: {color: '#888', width: 1, dash: 'dash'}
-    }],
-  };
-
-  // ── 2D heatmap ──
-  const vm = Math.max(...Array.from(s_tot).map(Math.abs));
-
-  const z = [];
-  for (let iy = 0; iy < ny; iy++) {
-    z.push(new Array(nx).fill(null));
-  }
-  for (let i = 0; i < N_bins; i++) {
-    z[binIy[i]][binIx[i]] = s_tot[i];
-  }
-
-  const traceHeatmap = {
-    type: 'heatmap',
-    x: xEdges, y: yEdges, z: z,
-    colorscale: 'RdBu',
-    reversescale: false,
-    zmin: -vm, zmax: vm,
-    connectgaps: false,
-    hoverongaps: false,
-    colorbar: {
-      title: {text: 'S(x,y)', font: {size: 13}},
-      len: 0.85, thickness: 18, exponentformat: 'e',
-    },
-    hovertemplate: 'x=%{x:.3f}<br>y=%{y:.3f}<br>S=%{z:.3e}<extra></extra>',
-  };
-
-  const xline = [], yline = [];
-  for (let i = 0; i <= 300; i++) {
-    const xv = i / 300;
-    xline.push(xv);
-    yline.push(0.5 + Math.abs(0.5 - xv));
-  }
-  const geomLine = {
-    x: xline, y: yline, mode: 'lines', type: 'scatter',
-    line: {color: 'black', width: 1},
-    showlegend: false, hoverinfo: 'skip',
-  };
-
-  const layout2d = {
-    title: {text: title2, font: {size: 14}},
-    xaxis: {title: {text: 'x = k₁/k₃', font: {size: 13}},
-            range: [0, sqR], constrain: 'domain'},
-    yaxis: {title: {text: 'y = k₂/k₃', font: {size: 13}},
-            range: [0.5/sqR, sqR], constrain: 'domain',
-            scaleanchor: 'x', scaleratio: 1},
-    margin: {l: 65, r: 100, t: 45, b: 55},
-    shapes: [{
-      type: 'line', x0: 0, x1: sqR, y0: 1, y1: 1, xref: 'x', yref: 'y',
-      line: {color: 'black', width: 0.8}
-    }],
-  };
-
-  if (!plotsInitialized) {
-    Plotly.newPlot('plot1d', traces1d, layout1d,
-      {responsive: true, displayModeBar: false});
-    Plotly.newPlot('plot2d', [traceHeatmap, geomLine], layout2d,
-      {responsive: true, displayModeBar: false});
-    plotsInitialized = true;
-  } else {
-    Plotly.react('plot1d', traces1d, layout1d);
-    Plotly.react('plot2d', [traceHeatmap, geomLine], layout2d);
-  }
 }
+function getParams(){ const p={}; for(const k of Object.keys(CFG[MODE].defaults)) p[k]=parseFloat(sliderEls[k].value); return p; }
+function resetSliders(){ const cfg=CFG[MODE];
+  for(const k of Object.keys(cfg.defaults)){ sliderEls[k].value=cfg.defaults[k]; valEls[k].textContent=cfg.fmt(k,cfg.defaults[k]); }
+  requestUpdate(); }
 
-// Throttle updates
-let _updatePending = false;
-function requestUpdate() {
-  if (_updatePending) return;
-  _updatePending = true;
-  requestAnimationFrame(() => {
-    _updatePending = false;
-    updatePlots();
-  });
+// ═══════════════ plotting ═══════════════
+function updatePlots(){
+  const cfg=CFG[MODE], p=getParams();
+  const {comps,s_tot,title1,title2}=cfg.compute(p);
+  const xmin=cfg.xmin;
+  const {xs,x_1d,mask_1d,N_bins,N_1d,nx,ny,binIx,binIy,xEdges,yEdges}=DATA;
+  const xf=[]; for(let k=0;k<N_1d;k++) if(x_1d[k]>=xmin) xf.push(x_1d[k]);
+  const slice=(s)=>{ const out=[]; let j=0;
+    for(let i=0;i<N_bins;i++){ if(mask_1d[i]>0.5){ if(x_1d[j]>=xmin) out.push(s[i]/(divideByX?x_1d[j]:1.0)); j++; } } return out; };
+  const traces1d=[];
+  for(const c of comps){ const arr=slice(c.s);
+    if(useLogY){ const xv=[],py=[],ny2=[];
+      for(let i=0;i<xf.length;i++){ xv.push(xf[i]); py.push(arr[i]>FLOOR?arr[i]:null); ny2.push(-arr[i]>FLOOR?-arr[i]:null); }
+      traces1d.push({x:xv,y:py,name:c.name,mode:'lines',line:{color:c.color,width:2.5},showlegend:true});
+      traces1d.push({x:xv,y:ny2,name:c.name+' (neg)',mode:'lines',line:{color:c.color,width:2,dash:'dot'},showlegend:false});
+    } else { const xv=[],yv=[]; for(let i=0;i<xf.length;i++){ xv.push(xf[i]); yv.push(arr[i]); }
+      traces1d.push({x:xv,y:yv,name:c.name,mode:'lines',line:{color:c.color,width:2.5},showlegend:true}); }
+  }
+  const layout1d={ title:{text:title1,font:{size:14}},
+    xaxis:{type:'log',title:{text:'x = k₁/k₃',font:{size:13}},range:[Math.log10(xmin),0]},
+    yaxis:{type:useLogY?'log':'linear',title:{text:divideByX?'S(x,1) / x':'S(x,1)',font:{size:13}},autorange:true},
+    legend:{x:0.98,y:0.98,xanchor:'right',yanchor:'top',bgcolor:'rgba(255,255,255,0.85)',bordercolor:'#ccc',borderwidth:1,font:{size:11}},
+    margin:{l:65,r:15,t:45,b:55},
+    shapes:useLogY?[]:[{type:'line',x0:xmin,x1:1,y0:0,y1:0,xref:'x',yref:'y',line:{color:'#888',width:1,dash:'dash'}}] };
+  let vm=0; for(let i=0;i<N_bins;i++) if(xs[i]>=xmin) vm=Math.max(vm,Math.abs(s_tot[i]));
+  const z=[]; for(let iy=0;iy<ny;iy++) z.push(new Array(nx).fill(null));
+  for(let i=0;i<N_bins;i++) if(xs[i]>=xmin) z[binIy[i]][binIx[i]]=s_tot[i];
+  const traceHeatmap={ type:'heatmap',x:xEdges,y:yEdges,z,colorscale:'RdBu',reversescale:false,zmin:-vm,zmax:vm,
+    connectgaps:false,hoverongaps:false,colorbar:{title:{text:'S(x,y)',font:{size:13}},len:0.85,thickness:18,exponentformat:'e'},
+    hovertemplate:'x=%{x:.3f}<br>y=%{y:.3f}<br>S=%{z:.3e}<extra></extra>' };
+  const xline=[],yline=[]; for(let i=0;i<=300;i++){ const xv=i/300; xline.push(xv); yline.push(0.5+Math.abs(0.5-xv)); }
+  const geomLine={x:xline,y:yline,mode:'lines',type:'scatter',line:{color:'black',width:1},showlegend:false,hoverinfo:'skip'};
+  const layout2d={ title:{text:title2,font:{size:14}},
+    xaxis:{title:{text:'x = k₁/k₃',font:{size:13}},range:[0,sqR],constrain:'domain'},
+    yaxis:{title:{text:'y = k₂/k₃',font:{size:13}},range:[0.5/sqR,sqR],constrain:'domain',scaleanchor:'x',scaleratio:1},
+    margin:{l:65,r:100,t:45,b:55},
+    shapes:[{type:'line',x0:0,x1:sqR,y0:1,y1:1,xref:'x',yref:'y',line:{color:'black',width:0.8}}] };
+  if(!plotsInitialized){
+    Plotly.newPlot('plot1d',traces1d,layout1d,{responsive:true,displayModeBar:false});
+    Plotly.newPlot('plot2d',[traceHeatmap,geomLine],layout2d,{responsive:true,displayModeBar:false});
+    plotsInitialized=true;
+  } else { Plotly.react('plot1d',traces1d,layout1d); Plotly.react('plot2d',[traceHeatmap,geomLine],layout2d); }
 }
+let _pending=false;
+function requestUpdate(){ if(_pending) return; _pending=true; requestAnimationFrame(()=>{ _pending=false; updatePlots(); }); }
+function typesetMath(){ if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise(); else setTimeout(typesetMath,200); }
 
-// ═══════════════════════════════════════════════════
-// Init
-// ═══════════════════════════════════════════════════
-async function init() {
+// ═══════════════ mobile / tabs ═══════════════
+function isMobile(){ return window.innerWidth<=800; }
+function setActiveTab(tab){ activeTab=tab;
+  const a=document.getElementById('plot1d'), b=document.getElementById('plot2d');
+  const ba=document.getElementById('tab1d'), bb=document.getElementById('tab2d');
+  if(isMobile()){ a.classList.toggle('hidden-mobile',tab!=='1d'); b.classList.toggle('hidden-mobile',tab!=='2d'); }
+  else { a.classList.remove('hidden-mobile'); b.classList.remove('hidden-mobile'); }
+  ba.classList.toggle('active',tab==='1d'); bb.classList.toggle('active',tab==='2d');
+  requestAnimationFrame(()=>Plotly.Plots.resize(tab==='1d'?a:b)); }
+
+// ═══════════════ mode switch ═══════════════
+async function switchMode(m){
+  MODE=m;
+  document.getElementById('btn-weak').classList.toggle('active',m==='weak');
+  document.getElementById('btn-gen').classList.toggle('active',m==='general');
+  document.getElementById('h1').textContent=CFG[m].title;
+  document.querySelector('.lag-body').innerHTML=CFG[m].lagrangian;
+  if(!DATAS[m]){
+    document.getElementById('app').style.display='none';
+    const ld=document.getElementById('loading'); ld.style.display=''; ld.textContent='Loading shape data…';
+    try{ await CFG[m].load(); }catch(e){ ld.textContent='Error loading data: '+e.message; return; }
+    ld.style.display='none';
+  }
+  DATA=DATAS[m];
+  document.getElementById('app').style.display='';
+  if(!DATA.binIx) buildGrid();
   buildSliders();
-
-  try {
-    await loadData();
-  } catch(e) {
-    document.getElementById('loading').textContent = 'Error loading data: ' + e.message;
-    return;
-  }
-
-  buildGrid();
-
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('app').style.display = '';
-
-  // Tab switching
-  document.getElementById('tab1d').addEventListener('click', () => setActiveTab('1d'));
-  document.getElementById('tab2d').addEventListener('click', () => setActiveTab('2d'));
-
-  // Apply initial mobile state
-  if (isMobile()) setActiveTab('1d');
-  window.addEventListener('resize', () => {
-    if (isMobile()) {
-      setActiveTab(activeTab);
-    } else {
-      document.getElementById('plot1d').classList.remove('hidden-mobile');
-      document.getElementById('plot2d').classList.remove('hidden-mobile');
-      Plotly.Plots.resize('plot1d');
-      Plotly.Plots.resize('plot2d');
-    }
-  });
-
-  // Log checkbox
-  const logCB = document.getElementById('logY');
-  logCB.checked = false;
-  logCB.addEventListener('change', () => {
-    useLogY = logCB.checked;
-    updatePlots();
-  });
-
-  // Divide-by-x checkbox
-  const divXCB = document.getElementById('divX');
-  divXCB.checked = true;
-  divXCB.addEventListener('change', () => {
-    divideByX = divXCB.checked;
-    updatePlots();
-  });
-
-  // Reset button
-  document.getElementById('resetBtn').addEventListener('click', resetSliders);
-
-  // Initial plot
+  Plotly.purge('plot1d'); Plotly.purge('plot2d'); plotsInitialized=false;
+  if(isMobile()) setActiveTab(activeTab);
   updatePlots();
-  typesetMath();   // render MathJax in dynamically-built slider labels
+  typesetMath();
 }
 
-function typesetMath(){ if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise();
-  else setTimeout(typesetMath,200); }
-
+// ═══════════════ init ═══════════════
+async function init(){
+  document.getElementById('btn-weak').addEventListener('click',()=>{ if(MODE!=='weak') switchMode('weak'); });
+  document.getElementById('btn-gen').addEventListener('click',()=>{ if(MODE!=='general') switchMode('general'); });
+  document.getElementById('tab1d').addEventListener('click',()=>setActiveTab('1d'));
+  document.getElementById('tab2d').addEventListener('click',()=>setActiveTab('2d'));
+  window.addEventListener('resize',()=>{ if(isMobile()){ setActiveTab(activeTab); }
+    else { document.getElementById('plot1d').classList.remove('hidden-mobile');
+           document.getElementById('plot2d').classList.remove('hidden-mobile');
+           Plotly.Plots.resize('plot1d'); Plotly.Plots.resize('plot2d'); } });
+  const logCB=document.getElementById('logY'); logCB.checked=false;
+  logCB.addEventListener('change',()=>{ useLogY=logCB.checked; updatePlots(); });
+  const divXCB=document.getElementById('divX'); divXCB.checked=true;
+  divXCB.addEventListener('change',()=>{ divideByX=divXCB.checked; updatePlots(); });
+  document.getElementById('resetBtn').addEventListener('click',resetSliders);
+  await switchMode('weak');
+}
 init();
 </script>
 </body>
