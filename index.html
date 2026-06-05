@@ -129,7 +129,7 @@ const LAG_GEN = LAG_KIN
   + `<p>$$\\color{#1f77b4}{-\\,\\lambda(\\partial_\\mu\\pi_c)^2\\dot{\\pi}_c - \\Delta\\lambda\\,\\dot{\\pi}_c^3}\\;\\;\\color{#ff7f0e}{-\\,\\tfrac{\\kappa}{2}(\\partial_\\mu\\pi_c)^2\\sigma_c - \\tfrac{\\Delta\\kappa}{2}\\dot{\\pi}_c^2\\sigma_c - \\tfrac{\\alpha}{2}\\dot{\\pi}_c\\sigma_c^2 - \\mu\\,\\sigma_c^3 - \\beta\\tfrac{\\partial_i\\pi_c\\partial_i\\sigma_c}{a^2}\\dot{\\sigma}_c}$$</p>`
   + LAG_DEFHDR + LAG_DEF_LAM
   + `<p style="font-size:0.85rem;">$$\\kappa=\\frac{c_{\\rm rel}^{3/2}}{f_\\pi^2}\\rho,\\quad \\Delta\\kappa=\\frac{c_{\\rm rel}^{3/2}}{f_\\pi^2}\\Delta\\rho,\\quad \\beta=\\frac{c_\\sigma^{-2}-1}{f_\\pi^2}c_{\\rm rel}^{3/2},\\quad f_\\pi=H(4\\pi^2\\Delta_\\zeta^2)^{-1/4}$$</p>`
-  + `<p style="font-size:0.85rem; color:#666;">Mass $m$ in units of $H$; $\\rho$ non-perturbative (weak mixing is $\\rho\\lesssim H$). Each $\\sigma$ leg requires one $\\rho$-insertion, so vertices with 1, 2, 3 $\\sigma$ fields give <b>single</b>, <b>double</b>, <b>triple</b> exchange (plotted separately). Shapes are interpolated from a finite grid and carry some residual numerical noise.</p>`;
+  + `<p style="font-size:0.85rem; color:#666;">Here $\\rho/H$ takes general, non-perturbative values (the weak-mixing mode is restricted to $\\rho\\lesssim H$). Each $\\sigma$ leg requires one $\\rho$-insertion, so vertices with 1, 2, 3 $\\sigma$ fields give <b>single</b>, <b>double</b>, <b>triple</b> exchange (plotted separately). Shapes are interpolated from a finite grid and carry some residual numerical noise.</p>`;
 
 // ═══════════════ mode configs ═══════════════
 const CFG = {
@@ -162,8 +162,8 @@ const CFG = {
       ['lrho','log₁₀ ρ/H',         -4.0,3.0, 0.05, 0.0, 'Mixing strength','bg'],
       ['dr','Δρ/H',             -5000.,5000.,50., 0.0, '$\\dot{\\pi}^2\\sigma$ exchange','op'],
       ['c3','$\\tilde{c}_3$',      -10.,10., 0.1, 0.0, '$\\dot{\\pi}^3$ self-interaction','op'],
-      ['al','α',                   -1.0,1.0, 0.02,0.0, '$\\dot{\\pi}\\sigma^2$ exchange','op'],
-      ['mus','$\\mu/H$',           -1.0,1.0, 0.02,0.0, '$\\sigma^3$ exchange','op'],
+      ['al','α',                   -5.0,5.0, 0.05,0.0, '$\\dot{\\pi}\\sigma^2$ exchange','op'],
+      ['mus','$\\mu/H$',           -5.0,5.0, 0.05,0.0, '$\\sigma^3$ exchange','op'],
     ],
     fmt:(k,v)=>{ if(k==='m'||k==='lcpi'||k==='lcsig'||k==='lrho') return v.toFixed(2);
                  if(k==='dr') return v.toFixed(0); if(k==='c3') return v.toFixed(1); return v.toFixed(2); },
