@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Massive Scalar Exchange (Weak Mixing) — Bispectrum Shape Explorer</title>
+<script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script>MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]}};</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
@@ -255,7 +256,7 @@ const FLOOR = 1e-30;
 const DEFAULTS = {mu:2.5, lcpi:-1.0, lcsig:0.0, c3:0.0, rho:1.0, drho:0.0};
 const SLIDER_DEFS = [
   ['lcpi', 'log₁₀ c<sub>π</sub>',  -2.0,  0.0, 0.05, DEFAULTS.lcpi, 'Sound Speed', 'self'],
-  ['c3',   'c̃₃(c<sub>π</sub>⁻²−1)', -1000, 1000, 0.5, DEFAULTS.c3,
+  ['c3',   '$\\tilde{c}_3(c_\\pi^{-2}-1)$', -1000, 1000, 0.5, DEFAULTS.c3,
    'π̇³ self-interaction', 'self'],
   ['mu',   'μ',                      0.0,  6.0, 0.10, DEFAULTS.mu,  'Scalar Mass', 'mix'],
   ['lcsig','log₁₀ c<sub>σ</sub>',  -2.0,  0.0, 0.05, DEFAULTS.lcsig,'Sound Speed', 'mix'],
@@ -561,7 +562,7 @@ function updatePlots() {
   const csig = Math.pow(10, p.lcsig).toFixed(2);
   const muLabel = p.mu < 0.01 ? '0' : p.mu.toFixed(2);
   const title1 = `μ=${muLabel}, c<sub>π</sub>=${cpi}, c<sub>σ</sub>=${csig}`;
-  const title2 = `ρ=${p.rho.toFixed(1)}, Δρ=${p.drho.toFixed(1)}, c̃₃=${p.c3.toFixed(0)}`;
+  const title2 = `$\\rho=${p.rho.toFixed(1)},\\ \\Delta\\rho=${p.drho.toFixed(1)},\\ \\tilde{c}_3=${p.c3.toFixed(0)}$`;
 
   // ── 1D Plot traces ──
   const traces1d = [];
@@ -742,7 +743,11 @@ async function init() {
 
   // Initial plot
   updatePlots();
+  typesetMath();   // render MathJax in dynamically-built slider labels
 }
+
+function typesetMath(){ if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+  else setTimeout(typesetMath,200); }
 
 init();
 </script>

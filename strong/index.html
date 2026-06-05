@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Massive Scalar Exchange (General Mixing) — Bispectrum Shape Explorer</title>
+<script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script>MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]}};</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
@@ -96,7 +97,7 @@
     </div>
     <div class="group-title">Background parameters</div>
     <div id="bg-sliders"></div>
-    <div class="group-title">Operator couplings (units of natural bound)</div>
+    <div class="group-title">Operator couplings (value = coupling; slider spans ±perturbativity bound)</div>
     <div id="op-sliders"></div>
   </div>
 </div>
@@ -113,11 +114,25 @@ const SLIDER_DEFS = [
   ['lcpi', 'log₁₀ c<sub>π</sub>', -2.0,  0.0, 0.05, DEFAULTS.lcpi, 'Inflaton sound speed', 'bg'],
   ['lcsig','log₁₀ c<sub>σ</sub>', -1.0,  0.0, 0.05, DEFAULTS.lcsig,'Scalar sound speed',   'bg'],
   ['lrho', 'log₁₀ ρ',            -4.0,  3.0, 0.05, DEFAULTS.lrho, 'Mixing strength','bg'],
-  ['dr2n', 'Δρ²',                -3.0,  3.0, 0.1,  DEFAULTS.dr2n, 'π̇²σ exchange', 'op'],
-  ['c3n',  'c̃₃',                 -3.0,  3.0, 0.1,  DEFAULTS.c3n,  'π̇³ self-int.', 'op'],
-  ['r2an', 'ρ²α',                -3.0,  3.0, 0.1,  DEFAULTS.r2an, 'π̇σ² exchange', 'op'],
-  ['r3mn', 'ρ³μ<sub>σ</sub>',    -3.0,  3.0, 0.1,  DEFAULTS.r3mn, 'σ³ exchange',  'op'],
+  ['dr2n', 'Δρ²',                -1.0,  1.0, 0.02, DEFAULTS.dr2n, 'π̇²σ exchange', 'op'],
+  ['c3n',  '$\\tilde{c}_3$',      -1.0,  1.0, 0.02, DEFAULTS.c3n,  'π̇³ self-int.', 'op'],
+  ['r2an', 'ρ²α',                -1.0,  1.0, 0.02, DEFAULTS.r2an, 'π̇σ² exchange', 'op'],
+  ['r3mn', 'ρ³μ<sub>σ</sub>',    -1.0,  1.0, 0.02, DEFAULTS.r3mn, 'σ³ exchange',  'op'],
 ];
+// operator slider key -> get_bounds variable; slider value is a fraction of the perturbativity bound
+const OP_BOUND = {dr2n:'Deltarho2', c3n:'c3var', r2an:'rho2alpha', r3mn:'rho3mu'};
+const XMIN = 0.01;   // drop x < XMIN (noisy low-x region)
+
+// number formatting for the physical (un-normalized) couplings
+function fmtSci(v){ if(!isFinite(v)) return '—'; if(v===0) return '0';
+  const a=Math.abs(v); if(a>=1e-2 && a<1e4) return (Math.round(v*100)/100).toString();
+  return v.toExponential(1); }
+function texNum(v){ if(!isFinite(v)) return '-'; if(v===0) return '0';
+  const e=Math.floor(Math.log10(Math.abs(v))); const m=v/Math.pow(10,e);
+  if(e>=-2 && e<3) return (Math.round(v*100)/100).toString();
+  return `${Math.round(m*10)/10}\\times10^{${e}}`; }
+function typesetMath(){ if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+  else setTimeout(typesetMath,200); }
 
 const OPS = ['del2pi_dotpi','dot3pi','del2pi_sigma','dot2pi_sigma',
              'dotpi_sigma2','sigma3','delpi_delsigma_dotsigma'];
@@ -314,14 +329,21 @@ let plotsInitialized=false;
 function updatePlots(){
   const p=getParams();
   const S=computeShape(p);
-  const {x_1d,mask_1d,N_bins,N_1d,nx,ny,binIx,binIy,xEdges,yEdges}=DATA;
+  const {xs,x_1d,mask_1d,N_bins,N_1d,nx,ny,binIx,binIy,xEdges,yEdges}=DATA;
 
-  const slice1d=(sarr)=>{ const out=new Float64Array(N_1d); let j=0;
-    for(let i=0;i<N_bins;i++){ if(mask_1d[i]>0.5){ out[j]=sarr[i]/(divideByX?x_1d[j]:1.0); j++; } } return out; };
+  // physical (un-normalized) couplings = slider fraction * perturbativity bound, shown live
+  const rhoV=Math.pow(10,p.lrho), cpiV=Math.pow(10,p.lcpi), csigV=Math.pow(10,p.lcsig);
+  const act={}; for(const k in OP_BOUND){ act[k]=p[k]*getBounds(OP_BOUND[k],rhoV,cpiV,csigV);
+    if(valEls[k]) valEls[k].textContent=fmtSci(act[k]); }
 
-  const cpi=Math.pow(10,p.lcpi).toFixed(2), csig=Math.pow(10,p.lcsig).toFixed(2);
-  const title1=`μ=${p.mu.toFixed(2)}, c<sub>π</sub>=${cpi}, c<sub>σ</sub>=${csig}, ρ=${Math.pow(10,p.lrho).toPrecision(2)}`;
-  const title2=`Δρ²=${p.dr2n.toFixed(1)}, c̃₃=${p.c3n.toFixed(1)}, ρ²α=${p.r2an.toFixed(1)}, ρ³μ=${p.r3mn.toFixed(1)} (norm.)`;
+  // 1D x-grid, dropping the noisy x < XMIN region
+  const xf=[]; for(let k=0;k<N_1d;k++) if(x_1d[k]>=XMIN) xf.push(x_1d[k]);
+  const slice1d=(sarr)=>{ const out=[]; let j=0;
+    for(let i=0;i<N_bins;i++){ if(mask_1d[i]>0.5){ if(x_1d[j]>=XMIN) out.push(sarr[i]/(divideByX?x_1d[j]:1.0)); j++; } } return out; };
+
+  const cpi=cpiV.toFixed(2), csig=csigV.toFixed(2);
+  const title1=`μ=${p.mu.toFixed(2)}, c<sub>π</sub>=${cpi}, c<sub>σ</sub>=${csig}, ρ=${rhoV.toPrecision(2)}`;
+  const title2=`$\\Delta\\rho^2=${texNum(act.dr2n)},\\ \\tilde{c}_3=${texNum(act.c3n)},\\ \\rho^2\\alpha=${texNum(act.r2an)},\\ \\rho^3\\mu_\\sigma=${texNum(act.r3mn)}$`;
 
   const traces1d=[]; const comps=[
     {arr:slice1d(S.s_self),  name:'Self-interaction', color:'#1f77b4'},
@@ -331,24 +353,24 @@ function updatePlots(){
     {arr:slice1d(S.s_tot),   name:'Total',            color:'#000000'} ];
   if(useLogY){
     for(const {arr,name,color} of comps){ const xv=[],py=[],ny2=[];
-      for(let i=0;i<N_1d;i++){ xv.push(x_1d[i]); py.push(arr[i]>FLOOR?arr[i]:null); ny2.push(-arr[i]>FLOOR?-arr[i]:null); }
+      for(let i=0;i<xf.length;i++){ xv.push(xf[i]); py.push(arr[i]>FLOOR?arr[i]:null); ny2.push(-arr[i]>FLOOR?-arr[i]:null); }
       traces1d.push({x:xv,y:py,name,mode:'lines',line:{color,width:2.5},showlegend:true});
       traces1d.push({x:xv,y:ny2,name:name+' (neg)',mode:'lines',line:{color,width:2,dash:'dot'},showlegend:false}); }
   } else {
     for(const {arr,name,color} of comps){ const xv=[],yv=[];
-      for(let i=0;i<N_1d;i++){ xv.push(x_1d[i]); yv.push(arr[i]); }
+      for(let i=0;i<xf.length;i++){ xv.push(xf[i]); yv.push(arr[i]); }
       traces1d.push({x:xv,y:yv,name,mode:'lines',line:{color,width:2.5},showlegend:true}); }
   }
   const layout1d={ title:{text:title1,font:{size:14}},
-    xaxis:{type:'log',title:{text:'x = k₁/k₃',font:{size:13}},range:[-3,0]},
+    xaxis:{type:'log',title:{text:'x = k₁/k₃',font:{size:13}},range:[Math.log10(XMIN),0]},
     yaxis:{type:useLogY?'log':'linear',title:{text:divideByX?'S(x,1) / x':'S(x,1)',font:{size:13}},autorange:true},
     legend:{x:0.98,y:0.98,xanchor:'right',yanchor:'top',bgcolor:'rgba(255,255,255,0.85)',bordercolor:'#ccc',borderwidth:1,font:{size:11}},
     margin:{l:65,r:15,t:45,b:55},
-    shapes:useLogY?[]:[{type:'line',x0:1e-3,x1:1,y0:0,y1:0,xref:'x',yref:'y',line:{color:'#888',width:1,dash:'dash'}}] };
+    shapes:useLogY?[]:[{type:'line',x0:XMIN,x1:1,y0:0,y1:0,xref:'x',yref:'y',line:{color:'#888',width:1,dash:'dash'}}] };
 
-  const vm=Math.max(...Array.from(S.s_tot).map(Math.abs));
+  let vm=0; for(let i=0;i<N_bins;i++) if(xs[i]>=XMIN) vm=Math.max(vm,Math.abs(S.s_tot[i]));
   const z=[]; for(let iy=0;iy<ny;iy++) z.push(new Array(nx).fill(null));
-  for(let i=0;i<N_bins;i++) z[binIy[i]][binIx[i]]=S.s_tot[i];
+  for(let i=0;i<N_bins;i++) if(xs[i]>=XMIN) z[binIy[i]][binIx[i]]=S.s_tot[i];
   const traceHeatmap={ type:'heatmap',x:xEdges,y:yEdges,z, colorscale:'RdBu',reversescale:false,
     zmin:-vm,zmax:vm,connectgaps:false,hoverongaps:false,
     colorbar:{title:{text:'S(x,y)',font:{size:13}},len:0.85,thickness:18,exponentformat:'e'},
@@ -391,6 +413,7 @@ async function init(){
   divXCB.addEventListener('change',()=>{ divideByX=divXCB.checked; updatePlots(); });
   document.getElementById('resetBtn').addEventListener('click',resetSliders);
   updatePlots();
+  typesetMath();   // render MathJax in dynamically-built slider labels
 }
 init();
 </script>
