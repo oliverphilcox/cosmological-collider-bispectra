@@ -296,7 +296,9 @@ function computeGeneral(p){
   const lr=Math.max(p.lrho,DATA.LOG10RHO_MIN), reff=Math.pow(10,lr), lc=Math.log10(crel);
   const {P,f,g}=normedP(reff,mu,crel);
   const fac={}; for(const k of OPS) fac[k]=factorFromP(COEF[k],f,g,P);
-  const S={}; for(const k of OPS){ const v=interp3Vec(DATA.cubes[k],lr,mu,lc), fk=fac[k]; for(let n=0;n<v.length;n++) v[n]*=fk; S[k]=v; }
+  // (rho/rho_eff)^power : leading low-rho extrapolation below the grid (strong_lib _make_shape_fn); =1 in range
+  const RPOW={del2pi_dotpi:0,dot3pi:0,del2pi_sigma:1,dot2pi_sigma:1,dotpi_sigma2:2,sigma3:3,delpi_delsigma_dotsigma:2};
+  const S={}; for(const k of OPS){ const v=interp3Vec(DATA.cubes[k],lr,mu,lc), fk=fac[k]*Math.pow(rho/reff,RPOW[k]); for(let n=0;n<v.length;n++) v[n]*=fk; S[k]=v; }
   const ratio=interp3Scalar(DATA.cond_ratio,lr,mu,lc)*factorFromP(COEF.ratio,f,g,P);
   const Fpi=DATA.F_pi_base*Math.pow(Math.max(ratio,1e-300),0.25), F2=Fpi*Fpi;
   const lam1=0.5*(1-cpi*cpi)/F2/(csigma*csigma)*Math.pow(crel,1.5);
